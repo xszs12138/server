@@ -1,0 +1,106 @@
+package database
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"fmt"
+
+	"blog-server/internal/config"
+	"blog-server/internal/ent"
+
+	"entgo.io/ent/dialect"
+	entsql "entgo.io/ent/dialect/sql"
+	"github.com/go-sql-driver/mysql"
+)
+
+func Open(ctx context.Context, cfg config.Config) (*ent.Client, error) {
+	db, err := sql.Open("mysql", cfg.DatabaseDSN)
+	if err != nil {
+		return nil, err
+	}
+	client := ent.NewClient(ent.Driver(entsql.OpenDB(dialect.MySQL, db)))
+
+	if cfg.AutoMigrate {
+		if err := renameLegacyColumns(ctx, db); err != nil {
+			client.Close()
+			return nil, err
+		}
+		if err := client.Schema.Create(ctx); err != nil {
+			client.Close()
+			return nil, err
+		}
+		if err := dropLegacyColumns(ctx, db); err != nil {
+			client.Close()
+			return nil, err
+		}
+	}
+
+	return client, nil
+}
+
+func renameLegacyColumns(ctx context.Context, db *sql.DB) error {
+	legacyColumns := []struct {
+		table      string
+		oldColumn  string
+		newColumn  string
+		definition string
+	}{
+		{table: "dictItems", oldColumn: "code", newColumn: "value", definition: "int NOT NULL"},
+		{table: "dictItems", oldColumn: "name", newColumn: "label", definition: "varchar(64) NOT NULL"},
+		{table: "operationLogs", oldColumn: "action", newColumn: "actionLabel", definition: "varchar(64) NOT NULL"},
+		{table: "operationLogs", oldColumn: "actionCode", newColumn: "actionValue", definition: "int NOT NULL"},
+		{table: "operationLogs", oldColumn: "actionName", newColumn: "actionLabel", definition: "varchar(64) NOT NULL"},
+	}
+
+	for _, legacy := range legacyColumns {
+		if err := renameColumnIfExists(ctx, db, legacy.table, legacy.oldColumn, legacy.newColumn, legacy.definition); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func dropLegacyColumns(ctx context.Context, db *sql.DB) error {
+	legacyColumns := []struct {
+		table  string
+		column string
+	}{
+		{table: "dictItems", column: "code"},
+		{table: "dictItems", column: "name"},
+		{table: "operationLogs", column: "action"},
+		{table: "operationLogs", column: "actionCode"},
+		{table: "operationLogs", column: "actionName"},
+	}
+
+	for _, legacy := range legacyColumns {
+		if err := dropColumnIfExists(ctx, db, legacy.table, legacy.column); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func renameColumnIfExists(ctx context.Context, db *sql.DB, table string, oldColumn string, newColumn string, definition string) error {
+	query := fmt.Sprintf("ALTER TABLE `%s` CHANGE COLUMN `%s` `%s` %s", table, oldColumn, newColumn, definition)
+	if _, err := db.ExecContext(ctx, query); err != nil {
+		var mysqlErr *mysql.MySQLError
+		if errors.As(err, &mysqlErr) && (mysqlErr.Number == 1054 || mysqlErr.Number == 1060 || mysqlErr.Number == 1146) {
+			return nil
+		}
+		return fmt.Errorf("rename legacy column %s.%s to %s: %w", table, oldColumn, newColumn, err)
+	}
+	return nil
+}
+
+func dropColumnIfExists(ctx context.Context, db *sql.DB, table string, column string) error {
+	query := fmt.Sprintf("ALTER TABLE `%s` DROP COLUMN `%s`", table, column)
+	if _, err := db.ExecContext(ctx, query); err != nil {
+		var mysqlErr *mysql.MySQLError
+		if errors.As(err, &mysqlErr) && (mysqlErr.Number == 1091 || mysqlErr.Number == 1146) {
+			return nil
+		}
+		return fmt.Errorf("drop legacy column %s.%s: %w", table, column, err)
+	}
+	return nil
+}
