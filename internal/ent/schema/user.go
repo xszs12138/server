@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -55,5 +56,12 @@ func (User) Fields() []ent.Field {
 			StorageKey("deletedAt").
 			Optional().
 			Nillable(),
+	}
+}
+
+func (User) Edges() []ent.Edge {
+	return []ent.Edge{
+		edge.To("posts", Post.Type),
+		edge.To("adminComments", Comment.Type),
 	}
 }

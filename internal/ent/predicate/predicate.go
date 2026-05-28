@@ -6,11 +6,29 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Category is the predicate function for category builders.
+type Category func(*sql.Selector)
+
+// Comment is the predicate function for comment builders.
+type Comment func(*sql.Selector)
+
 // DictItem is the predicate function for dictitem builders.
 type DictItem func(*sql.Selector)
 
 // OperationLog is the predicate function for operationlog builders.
 type OperationLog func(*sql.Selector)
+
+// Post is the predicate function for post builders.
+type Post func(*sql.Selector)
+
+// PostTag is the predicate function for posttag builders.
+type PostTag func(*sql.Selector)
+
+// SiteSetting is the predicate function for sitesetting builders.
+type SiteSetting func(*sql.Selector)
+
+// Tag is the predicate function for tag builders.
+type Tag func(*sql.Selector)
 
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

@@ -12,10 +12,22 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// Category is the client for interacting with the Category builders.
+	Category *CategoryClient
+	// Comment is the client for interacting with the Comment builders.
+	Comment *CommentClient
 	// DictItem is the client for interacting with the DictItem builders.
 	DictItem *DictItemClient
 	// OperationLog is the client for interacting with the OperationLog builders.
 	OperationLog *OperationLogClient
+	// Post is the client for interacting with the Post builders.
+	Post *PostClient
+	// PostTag is the client for interacting with the PostTag builders.
+	PostTag *PostTagClient
+	// SiteSetting is the client for interacting with the SiteSetting builders.
+	SiteSetting *SiteSettingClient
+	// Tag is the client for interacting with the Tag builders.
+	Tag *TagClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -149,8 +161,14 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.Category = NewCategoryClient(tx.config)
+	tx.Comment = NewCommentClient(tx.config)
 	tx.DictItem = NewDictItemClient(tx.config)
 	tx.OperationLog = NewOperationLogClient(tx.config)
+	tx.Post = NewPostClient(tx.config)
+	tx.PostTag = NewPostTagClient(tx.config)
+	tx.SiteSetting = NewSiteSettingClient(tx.config)
+	tx.Tag = NewTagClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 
@@ -161,7 +179,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: DictItem.QueryXXX(), the query will be executed
+// applies a query, for example: Category.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

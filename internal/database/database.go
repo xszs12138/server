@@ -3,11 +3,13 @@ package database
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 
 	"blog-server/internal/config"
 	"blog-server/internal/ent"
+	entsitesetting "blog-server/internal/ent/sitesetting"
 
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
@@ -34,9 +36,52 @@ func Open(ctx context.Context, cfg config.Config) (*ent.Client, error) {
 			client.Close()
 			return nil, err
 		}
+		if err := ensureDefaultSiteSettings(ctx, client); err != nil {
+			client.Close()
+			return nil, err
+		}
 	}
 
 	return client, nil
+}
+
+func ensureDefaultSiteSettings(ctx context.Context, client *ent.Client) error {
+	defaults := []struct {
+		key         string
+		value       json.RawMessage
+		description string
+	}{
+		{
+			key:         "site.profile",
+			value:       json.RawMessage(`{"name":"xszs-blog","description":"个人博客","logo":"","icp":""}`),
+			description: "站点基础信息",
+		},
+		{
+			key:         "site.socialLinks",
+			value:       json.RawMessage(`[]`),
+			description: "社交链接",
+		},
+	}
+
+	for _, item := range defaults {
+		exists, err := client.SiteSetting.Query().
+			Where(entsitesetting.SettingKeyEQ(item.key)).
+			Exist(ctx)
+		if err != nil {
+			return err
+		}
+		if exists {
+			continue
+		}
+		if _, err := client.SiteSetting.Create().
+			SetSettingKey(item.key).
+			SetValue(item.value).
+			SetDescription(item.description).
+			Save(ctx); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func renameLegacyColumns(ctx context.Context, db *sql.DB) error {

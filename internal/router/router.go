@@ -16,6 +16,12 @@ func New(cfg config.Config, client *ent.Client) *gin.Engine {
 	userDAO := dao.NewEntUserDAO(client)
 	dictItemDAO := dao.NewEntDictItemDAO(client)
 	operationLogDAO := dao.NewEntOperationLogDAO(client)
+	postDAO := dao.NewEntPostDAO(client)
+	categoryDAO := dao.NewEntCategoryDAO(client)
+	tagDAO := dao.NewEntTagDAO(client)
+	commentDAO := dao.NewEntCommentDAO(client)
+	siteSettingDAO := dao.NewEntSiteSettingDAO(client)
+
 	authService := service.NewAuthService(
 		userDAO,
 		dictItemDAO,
@@ -23,7 +29,30 @@ func New(cfg config.Config, client *ent.Client) *gin.Engine {
 		cfg.JWTSecret,
 		cfg.TokenDuration,
 	)
+	postService := service.NewPostService(postDAO, categoryDAO, tagDAO, authService)
+	categoryService := service.NewCategoryService(categoryDAO, postDAO, authService)
+	tagService := service.NewTagService(tagDAO, postDAO, authService)
+	commentService := service.NewCommentService(commentDAO, postDAO, authService)
+	siteService := service.NewSiteService(siteSettingDAO)
+
 	authController := controller.NewAuthController(authService)
+	postController := controller.NewPostController(postService)
+	categoryController := controller.NewCategoryController(categoryService)
+	tagController := controller.NewTagController(tagService)
+	commentController := controller.NewCommentController(commentService)
+	siteController := controller.NewSiteController(siteService)
+
+	web := engine.Group("/api/web")
+	{
+		web.GET("/site", siteController.WebGetSite)
+		web.GET("/posts", postController.WebList)
+		web.GET("/archives", postController.WebArchives)
+		web.GET("/categories", categoryController.WebList)
+		web.GET("/tags", tagController.WebList)
+		web.GET("/posts/:slug/comments", commentController.WebListByPostSlug)
+		web.POST("/posts/:slug/comments", commentController.WebCreate)
+		web.GET("/posts/:slug", postController.WebGetBySlug)
+	}
 
 	admin := engine.Group("/api/admin")
 	{
@@ -41,6 +70,32 @@ func New(cfg config.Config, client *ent.Client) *gin.Engine {
 		admin.POST("/dict-items/:id/update", authController.UpdateDictItem)
 		admin.POST("/dict-items/:id/delete", authController.DeleteDictItem)
 		admin.GET("/operation-logs", authController.ListOperationLogs)
+
+		admin.GET("/posts", postController.AdminList)
+		admin.GET("/posts/:id/comments", commentController.AdminListByPostID)
+		admin.GET("/posts/:id", postController.AdminGetByID)
+		admin.POST("/posts", postController.Create)
+		admin.POST("/posts/:id/update", postController.Update)
+		admin.POST("/posts/:id/delete", postController.Delete)
+		admin.POST("/posts/:id/status", postController.UpdateStatus)
+
+		admin.GET("/categories", categoryController.AdminList)
+		admin.GET("/categories/:id", categoryController.AdminGetByID)
+		admin.POST("/categories", categoryController.Create)
+		admin.POST("/categories/:id/update", categoryController.Update)
+		admin.POST("/categories/:id/delete", categoryController.Delete)
+
+		admin.GET("/tags", tagController.AdminList)
+		admin.GET("/tags/:id", tagController.AdminGetByID)
+		admin.POST("/tags", tagController.Create)
+		admin.POST("/tags/:id/update", tagController.Update)
+		admin.POST("/tags/:id/delete", tagController.Delete)
+
+		admin.GET("/comments", commentController.AdminList)
+		admin.POST("/comments/:id/approve", commentController.AdminApprove)
+		admin.POST("/comments/:id/reject", commentController.AdminReject)
+		admin.POST("/comments/:id/delete", commentController.AdminDelete)
+		admin.POST("/comments/:id/reply", commentController.AdminReply)
 	}
 
 	return engine

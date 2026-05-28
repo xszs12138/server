@@ -202,6 +202,10 @@ func (svc *AuthService) EnsureAuthenticated(ctx context.Context, authorization s
 	return err
 }
 
+func (svc *AuthService) CurrentUser(ctx context.Context, authorization string) (*model.User, error) {
+	return svc.authenticate(ctx, authorization)
+}
+
 func (svc *AuthService) DeleteDictItem(ctx context.Context, id uint64) error {
 	err := svc.dictItems.Delete(ctx, id)
 	if err != nil {

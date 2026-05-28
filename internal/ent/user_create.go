@@ -3,6 +3,8 @@
 package ent
 
 import (
+	"blog-server/internal/ent/comment"
+	"blog-server/internal/ent/post"
 	"blog-server/internal/ent/user"
 	"context"
 	"errors"
@@ -140,6 +142,36 @@ func (_c *UserCreate) SetNillableDeletedAt(v *time.Time) *UserCreate {
 func (_c *UserCreate) SetID(v uint64) *UserCreate {
 	_c.mutation.SetID(v)
 	return _c
+}
+
+// AddPostIDs adds the "posts" edge to the Post entity by IDs.
+func (_c *UserCreate) AddPostIDs(ids ...uint64) *UserCreate {
+	_c.mutation.AddPostIDs(ids...)
+	return _c
+}
+
+// AddPosts adds the "posts" edges to the Post entity.
+func (_c *UserCreate) AddPosts(v ...*Post) *UserCreate {
+	ids := make([]uint64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddPostIDs(ids...)
+}
+
+// AddAdminCommentIDs adds the "adminComments" edge to the Comment entity by IDs.
+func (_c *UserCreate) AddAdminCommentIDs(ids ...uint64) *UserCreate {
+	_c.mutation.AddAdminCommentIDs(ids...)
+	return _c
+}
+
+// AddAdminComments adds the "adminComments" edges to the Comment entity.
+func (_c *UserCreate) AddAdminComments(v ...*Comment) *UserCreate {
+	ids := make([]uint64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddAdminCommentIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -316,6 +348,38 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.DeletedAt(); ok {
 		_spec.SetField(user.FieldDeletedAt, field.TypeTime, value)
 		_node.DeletedAt = &value
+	}
+	if nodes := _c.mutation.PostsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PostsTable,
+			Columns: []string{user.PostsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeUint64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.AdminCommentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AdminCommentsTable,
+			Columns: []string{user.AdminCommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(comment.FieldID, field.TypeUint64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

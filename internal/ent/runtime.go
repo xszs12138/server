@@ -3,10 +3,17 @@
 package ent
 
 import (
+	"blog-server/internal/ent/category"
+	"blog-server/internal/ent/comment"
 	"blog-server/internal/ent/dictitem"
 	"blog-server/internal/ent/operationlog"
+	"blog-server/internal/ent/post"
+	"blog-server/internal/ent/posttag"
 	"blog-server/internal/ent/schema"
+	"blog-server/internal/ent/sitesetting"
+	"blog-server/internal/ent/tag"
 	"blog-server/internal/ent/user"
+	"encoding/json"
 	"time"
 )
 
@@ -14,6 +21,140 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	categoryFields := schema.Category{}.Fields()
+	_ = categoryFields
+	// categoryDescName is the schema descriptor for name field.
+	categoryDescName := categoryFields[1].Descriptor()
+	// category.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	category.NameValidator = func() func(string) error {
+		validators := categoryDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// categoryDescSlug is the schema descriptor for slug field.
+	categoryDescSlug := categoryFields[2].Descriptor()
+	// category.SlugValidator is a validator for the "slug" field. It is called by the builders before save.
+	category.SlugValidator = func() func(string) error {
+		validators := categoryDescSlug.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(slug string) error {
+			for _, fn := range fns {
+				if err := fn(slug); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// categoryDescDescription is the schema descriptor for description field.
+	categoryDescDescription := categoryFields[3].Descriptor()
+	// category.DefaultDescription holds the default value on creation for the description field.
+	category.DefaultDescription = categoryDescDescription.Default.(string)
+	// category.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
+	category.DescriptionValidator = categoryDescDescription.Validators[0].(func(string) error)
+	// categoryDescSort is the schema descriptor for sort field.
+	categoryDescSort := categoryFields[4].Descriptor()
+	// category.DefaultSort holds the default value on creation for the sort field.
+	category.DefaultSort = categoryDescSort.Default.(int)
+	// categoryDescVisible is the schema descriptor for visible field.
+	categoryDescVisible := categoryFields[5].Descriptor()
+	// category.DefaultVisible holds the default value on creation for the visible field.
+	category.DefaultVisible = categoryDescVisible.Default.(bool)
+	// categoryDescCreatedAt is the schema descriptor for createdAt field.
+	categoryDescCreatedAt := categoryFields[6].Descriptor()
+	// category.DefaultCreatedAt holds the default value on creation for the createdAt field.
+	category.DefaultCreatedAt = categoryDescCreatedAt.Default.(func() time.Time)
+	// categoryDescUpdatedAt is the schema descriptor for updatedAt field.
+	categoryDescUpdatedAt := categoryFields[7].Descriptor()
+	// category.DefaultUpdatedAt holds the default value on creation for the updatedAt field.
+	category.DefaultUpdatedAt = categoryDescUpdatedAt.Default.(func() time.Time)
+	// category.UpdateDefaultUpdatedAt holds the default value on update for the updatedAt field.
+	category.UpdateDefaultUpdatedAt = categoryDescUpdatedAt.UpdateDefault.(func() time.Time)
+	commentFields := schema.Comment{}.Fields()
+	_ = commentFields
+	// commentDescNickname is the schema descriptor for nickname field.
+	commentDescNickname := commentFields[3].Descriptor()
+	// comment.NicknameValidator is a validator for the "nickname" field. It is called by the builders before save.
+	comment.NicknameValidator = func() func(string) error {
+		validators := commentDescNickname.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(nickname string) error {
+			for _, fn := range fns {
+				if err := fn(nickname); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// commentDescEmail is the schema descriptor for email field.
+	commentDescEmail := commentFields[4].Descriptor()
+	// comment.EmailValidator is a validator for the "email" field. It is called by the builders before save.
+	comment.EmailValidator = commentDescEmail.Validators[0].(func(string) error)
+	// commentDescWebsite is the schema descriptor for website field.
+	commentDescWebsite := commentFields[5].Descriptor()
+	// comment.WebsiteValidator is a validator for the "website" field. It is called by the builders before save.
+	comment.WebsiteValidator = commentDescWebsite.Validators[0].(func(string) error)
+	// commentDescContent is the schema descriptor for content field.
+	commentDescContent := commentFields[6].Descriptor()
+	// comment.ContentValidator is a validator for the "content" field. It is called by the builders before save.
+	comment.ContentValidator = commentDescContent.Validators[0].(func(string) error)
+	// commentDescStatus is the schema descriptor for status field.
+	commentDescStatus := commentFields[7].Descriptor()
+	// comment.DefaultStatus holds the default value on creation for the status field.
+	comment.DefaultStatus = commentDescStatus.Default.(string)
+	// comment.StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	comment.StatusValidator = commentDescStatus.Validators[0].(func(string) error)
+	// commentDescIP is the schema descriptor for ip field.
+	commentDescIP := commentFields[8].Descriptor()
+	// comment.IPValidator is a validator for the "ip" field. It is called by the builders before save.
+	comment.IPValidator = func() func(string) error {
+		validators := commentDescIP.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(ip string) error {
+			for _, fn := range fns {
+				if err := fn(ip); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// commentDescUserAgent is the schema descriptor for userAgent field.
+	commentDescUserAgent := commentFields[9].Descriptor()
+	// comment.DefaultUserAgent holds the default value on creation for the userAgent field.
+	comment.DefaultUserAgent = commentDescUserAgent.Default.(string)
+	// comment.UserAgentValidator is a validator for the "userAgent" field. It is called by the builders before save.
+	comment.UserAgentValidator = commentDescUserAgent.Validators[0].(func(string) error)
+	// commentDescCreatedAt is the schema descriptor for createdAt field.
+	commentDescCreatedAt := commentFields[11].Descriptor()
+	// comment.DefaultCreatedAt holds the default value on creation for the createdAt field.
+	comment.DefaultCreatedAt = commentDescCreatedAt.Default.(func() time.Time)
+	// commentDescUpdatedAt is the schema descriptor for updatedAt field.
+	commentDescUpdatedAt := commentFields[12].Descriptor()
+	// comment.DefaultUpdatedAt holds the default value on creation for the updatedAt field.
+	comment.DefaultUpdatedAt = commentDescUpdatedAt.Default.(func() time.Time)
+	// comment.UpdateDefaultUpdatedAt holds the default value on update for the updatedAt field.
+	comment.UpdateDefaultUpdatedAt = commentDescUpdatedAt.UpdateDefault.(func() time.Time)
 	dictitemFields := schema.DictItem{}.Fields()
 	_ = dictitemFields
 	// dictitemDescDictType is the schema descriptor for dictType field.
@@ -150,6 +291,196 @@ func init() {
 	operationlogDescCreatedAt := operationlogFields[8].Descriptor()
 	// operationlog.DefaultCreatedAt holds the default value on creation for the createdAt field.
 	operationlog.DefaultCreatedAt = operationlogDescCreatedAt.Default.(func() time.Time)
+	postFields := schema.Post{}.Fields()
+	_ = postFields
+	// postDescTitle is the schema descriptor for title field.
+	postDescTitle := postFields[1].Descriptor()
+	// post.TitleValidator is a validator for the "title" field. It is called by the builders before save.
+	post.TitleValidator = func() func(string) error {
+		validators := postDescTitle.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(title string) error {
+			for _, fn := range fns {
+				if err := fn(title); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// postDescSlug is the schema descriptor for slug field.
+	postDescSlug := postFields[2].Descriptor()
+	// post.SlugValidator is a validator for the "slug" field. It is called by the builders before save.
+	post.SlugValidator = func() func(string) error {
+		validators := postDescSlug.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(slug string) error {
+			for _, fn := range fns {
+				if err := fn(slug); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// postDescCover is the schema descriptor for cover field.
+	postDescCover := postFields[3].Descriptor()
+	// post.DefaultCover holds the default value on creation for the cover field.
+	post.DefaultCover = postDescCover.Default.(string)
+	// post.CoverValidator is a validator for the "cover" field. It is called by the builders before save.
+	post.CoverValidator = postDescCover.Validators[0].(func(string) error)
+	// postDescSummary is the schema descriptor for summary field.
+	postDescSummary := postFields[4].Descriptor()
+	// post.DefaultSummary holds the default value on creation for the summary field.
+	post.DefaultSummary = postDescSummary.Default.(string)
+	// post.SummaryValidator is a validator for the "summary" field. It is called by the builders before save.
+	post.SummaryValidator = postDescSummary.Validators[0].(func(string) error)
+	// postDescContent is the schema descriptor for content field.
+	postDescContent := postFields[5].Descriptor()
+	// post.ContentValidator is a validator for the "content" field. It is called by the builders before save.
+	post.ContentValidator = postDescContent.Validators[0].(func(string) error)
+	// postDescContentType is the schema descriptor for contentType field.
+	postDescContentType := postFields[6].Descriptor()
+	// post.DefaultContentType holds the default value on creation for the contentType field.
+	post.DefaultContentType = postDescContentType.Default.(string)
+	// post.ContentTypeValidator is a validator for the "contentType" field. It is called by the builders before save.
+	post.ContentTypeValidator = postDescContentType.Validators[0].(func(string) error)
+	// postDescStatus is the schema descriptor for status field.
+	postDescStatus := postFields[7].Descriptor()
+	// post.DefaultStatus holds the default value on creation for the status field.
+	post.DefaultStatus = postDescStatus.Default.(string)
+	// post.StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	post.StatusValidator = postDescStatus.Validators[0].(func(string) error)
+	// postDescIsPinned is the schema descriptor for isPinned field.
+	postDescIsPinned := postFields[8].Descriptor()
+	// post.DefaultIsPinned holds the default value on creation for the isPinned field.
+	post.DefaultIsPinned = postDescIsPinned.Default.(bool)
+	// postDescViewCount is the schema descriptor for viewCount field.
+	postDescViewCount := postFields[9].Descriptor()
+	// post.DefaultViewCount holds the default value on creation for the viewCount field.
+	post.DefaultViewCount = postDescViewCount.Default.(uint64)
+	// postDescCreatedAt is the schema descriptor for createdAt field.
+	postDescCreatedAt := postFields[13].Descriptor()
+	// post.DefaultCreatedAt holds the default value on creation for the createdAt field.
+	post.DefaultCreatedAt = postDescCreatedAt.Default.(func() time.Time)
+	// postDescUpdatedAt is the schema descriptor for updatedAt field.
+	postDescUpdatedAt := postFields[14].Descriptor()
+	// post.DefaultUpdatedAt holds the default value on creation for the updatedAt field.
+	post.DefaultUpdatedAt = postDescUpdatedAt.Default.(func() time.Time)
+	// post.UpdateDefaultUpdatedAt holds the default value on update for the updatedAt field.
+	post.UpdateDefaultUpdatedAt = postDescUpdatedAt.UpdateDefault.(func() time.Time)
+	posttagFields := schema.PostTag{}.Fields()
+	_ = posttagFields
+	// posttagDescCreatedAt is the schema descriptor for createdAt field.
+	posttagDescCreatedAt := posttagFields[2].Descriptor()
+	// posttag.DefaultCreatedAt holds the default value on creation for the createdAt field.
+	posttag.DefaultCreatedAt = posttagDescCreatedAt.Default.(func() time.Time)
+	sitesettingFields := schema.SiteSetting{}.Fields()
+	_ = sitesettingFields
+	// sitesettingDescSettingKey is the schema descriptor for settingKey field.
+	sitesettingDescSettingKey := sitesettingFields[1].Descriptor()
+	// sitesetting.SettingKeyValidator is a validator for the "settingKey" field. It is called by the builders before save.
+	sitesetting.SettingKeyValidator = func() func(string) error {
+		validators := sitesettingDescSettingKey.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(settingKey string) error {
+			for _, fn := range fns {
+				if err := fn(settingKey); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// sitesettingDescValue is the schema descriptor for value field.
+	sitesettingDescValue := sitesettingFields[2].Descriptor()
+	// sitesetting.DefaultValue holds the default value on creation for the value field.
+	sitesetting.DefaultValue = sitesettingDescValue.Default.(json.RawMessage)
+	// sitesettingDescDescription is the schema descriptor for description field.
+	sitesettingDescDescription := sitesettingFields[3].Descriptor()
+	// sitesetting.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
+	sitesetting.DescriptionValidator = sitesettingDescDescription.Validators[0].(func(string) error)
+	// sitesettingDescCreatedAt is the schema descriptor for createdAt field.
+	sitesettingDescCreatedAt := sitesettingFields[4].Descriptor()
+	// sitesetting.DefaultCreatedAt holds the default value on creation for the createdAt field.
+	sitesetting.DefaultCreatedAt = sitesettingDescCreatedAt.Default.(func() time.Time)
+	// sitesettingDescUpdatedAt is the schema descriptor for updatedAt field.
+	sitesettingDescUpdatedAt := sitesettingFields[5].Descriptor()
+	// sitesetting.DefaultUpdatedAt holds the default value on creation for the updatedAt field.
+	sitesetting.DefaultUpdatedAt = sitesettingDescUpdatedAt.Default.(func() time.Time)
+	// sitesetting.UpdateDefaultUpdatedAt holds the default value on update for the updatedAt field.
+	sitesetting.UpdateDefaultUpdatedAt = sitesettingDescUpdatedAt.UpdateDefault.(func() time.Time)
+	tagFields := schema.Tag{}.Fields()
+	_ = tagFields
+	// tagDescName is the schema descriptor for name field.
+	tagDescName := tagFields[1].Descriptor()
+	// tag.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	tag.NameValidator = func() func(string) error {
+		validators := tagDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// tagDescSlug is the schema descriptor for slug field.
+	tagDescSlug := tagFields[2].Descriptor()
+	// tag.SlugValidator is a validator for the "slug" field. It is called by the builders before save.
+	tag.SlugValidator = func() func(string) error {
+		validators := tagDescSlug.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(slug string) error {
+			for _, fn := range fns {
+				if err := fn(slug); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// tagDescDescription is the schema descriptor for description field.
+	tagDescDescription := tagFields[3].Descriptor()
+	// tag.DefaultDescription holds the default value on creation for the description field.
+	tag.DefaultDescription = tagDescDescription.Default.(string)
+	// tag.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
+	tag.DescriptionValidator = tagDescDescription.Validators[0].(func(string) error)
+	// tagDescSort is the schema descriptor for sort field.
+	tagDescSort := tagFields[4].Descriptor()
+	// tag.DefaultSort holds the default value on creation for the sort field.
+	tag.DefaultSort = tagDescSort.Default.(int)
+	// tagDescVisible is the schema descriptor for visible field.
+	tagDescVisible := tagFields[5].Descriptor()
+	// tag.DefaultVisible holds the default value on creation for the visible field.
+	tag.DefaultVisible = tagDescVisible.Default.(bool)
+	// tagDescCreatedAt is the schema descriptor for createdAt field.
+	tagDescCreatedAt := tagFields[6].Descriptor()
+	// tag.DefaultCreatedAt holds the default value on creation for the createdAt field.
+	tag.DefaultCreatedAt = tagDescCreatedAt.Default.(func() time.Time)
+	// tagDescUpdatedAt is the schema descriptor for updatedAt field.
+	tagDescUpdatedAt := tagFields[7].Descriptor()
+	// tag.DefaultUpdatedAt holds the default value on creation for the updatedAt field.
+	tag.DefaultUpdatedAt = tagDescUpdatedAt.Default.(func() time.Time)
+	// tag.UpdateDefaultUpdatedAt holds the default value on update for the updatedAt field.
+	tag.UpdateDefaultUpdatedAt = tagDescUpdatedAt.UpdateDefault.(func() time.Time)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescUsername is the schema descriptor for username field.

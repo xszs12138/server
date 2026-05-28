@@ -9,6 +9,96 @@ import (
 )
 
 var (
+	// CategoriesColumns holds the columns for the "categories" table.
+	CategoriesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUint64, Increment: true},
+		{Name: "name", Type: field.TypeString, Size: 64},
+		{Name: "slug", Type: field.TypeString, Unique: true, Size: 96},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 255, Default: ""},
+		{Name: "sort", Type: field.TypeInt, Default: 100},
+		{Name: "visible", Type: field.TypeBool, Default: true},
+		{Name: "createdAt", Type: field.TypeTime},
+		{Name: "updatedAt", Type: field.TypeTime},
+		{Name: "deletedAt", Type: field.TypeTime, Nullable: true},
+	}
+	// CategoriesTable holds the schema information for the "categories" table.
+	CategoriesTable = &schema.Table{
+		Name:       "categories",
+		Columns:    CategoriesColumns,
+		PrimaryKey: []*schema.Column{CategoriesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "ukCategoriesSlug",
+				Unique:  true,
+				Columns: []*schema.Column{CategoriesColumns[2]},
+			},
+			{
+				Name:    "idxCategoriesVisibleSort",
+				Unique:  false,
+				Columns: []*schema.Column{CategoriesColumns[5], CategoriesColumns[4]},
+			},
+		},
+	}
+	// CommentsColumns holds the columns for the "comments" table.
+	CommentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUint64, Increment: true},
+		{Name: "nickname", Type: field.TypeString, Size: 64},
+		{Name: "email", Type: field.TypeString, Nullable: true, Size: 128},
+		{Name: "website", Type: field.TypeString, Nullable: true, Size: 512},
+		{Name: "content", Type: field.TypeString, Size: 2147483647},
+		{Name: "status", Type: field.TypeString, Size: 32, Default: "pending"},
+		{Name: "ip", Type: field.TypeString, Size: 64},
+		{Name: "userAgent", Type: field.TypeString, Nullable: true, Size: 512, Default: ""},
+		{Name: "createdAt", Type: field.TypeTime},
+		{Name: "updatedAt", Type: field.TypeTime},
+		{Name: "deletedAt", Type: field.TypeTime, Nullable: true},
+		{Name: "parentId", Type: field.TypeUint64, Nullable: true},
+		{Name: "postId", Type: field.TypeUint64},
+		{Name: "adminUserId", Type: field.TypeUint64, Nullable: true},
+	}
+	// CommentsTable holds the schema information for the "comments" table.
+	CommentsTable = &schema.Table{
+		Name:       "comments",
+		Columns:    CommentsColumns,
+		PrimaryKey: []*schema.Column{CommentsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "comments_comments_replies",
+				Columns:    []*schema.Column{CommentsColumns[11]},
+				RefColumns: []*schema.Column{CommentsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "comments_posts_comments",
+				Columns:    []*schema.Column{CommentsColumns[12]},
+				RefColumns: []*schema.Column{PostsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "comments_users_adminComments",
+				Columns:    []*schema.Column{CommentsColumns[13]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "idxCommentsPostStatusCreatedAt",
+				Unique:  false,
+				Columns: []*schema.Column{CommentsColumns[12], CommentsColumns[5], CommentsColumns[8]},
+			},
+			{
+				Name:    "idxCommentsParentId",
+				Unique:  false,
+				Columns: []*schema.Column{CommentsColumns[11]},
+			},
+			{
+				Name:    "idxCommentsStatusCreatedAt",
+				Unique:  false,
+				Columns: []*schema.Column{CommentsColumns[5], CommentsColumns[8]},
+			},
+		},
+	}
 	// DictItemsColumns holds the columns for the "dictItems" table.
 	DictItemsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUint64, Increment: true},
@@ -73,6 +163,163 @@ var (
 			},
 		},
 	}
+	// PostsColumns holds the columns for the "posts" table.
+	PostsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUint64, Increment: true},
+		{Name: "title", Type: field.TypeString, Size: 160},
+		{Name: "slug", Type: field.TypeString, Unique: true, Size: 180},
+		{Name: "cover", Type: field.TypeString, Nullable: true, Size: 512, Default: ""},
+		{Name: "summary", Type: field.TypeString, Nullable: true, Size: 500, Default: ""},
+		{Name: "content", Type: field.TypeString, Size: 2147483647},
+		{Name: "contentType", Type: field.TypeString, Size: 32, Default: "markdown"},
+		{Name: "status", Type: field.TypeString, Size: 32, Default: "draft"},
+		{Name: "isPinned", Type: field.TypeBool, Default: false},
+		{Name: "viewCount", Type: field.TypeUint64, Default: 0},
+		{Name: "publishedAt", Type: field.TypeTime, Nullable: true},
+		{Name: "createdAt", Type: field.TypeTime},
+		{Name: "updatedAt", Type: field.TypeTime},
+		{Name: "deletedAt", Type: field.TypeTime, Nullable: true},
+		{Name: "categoryId", Type: field.TypeUint64, Nullable: true},
+		{Name: "authorId", Type: field.TypeUint64},
+	}
+	// PostsTable holds the schema information for the "posts" table.
+	PostsTable = &schema.Table{
+		Name:       "posts",
+		Columns:    PostsColumns,
+		PrimaryKey: []*schema.Column{PostsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "posts_categories_posts",
+				Columns:    []*schema.Column{PostsColumns[14]},
+				RefColumns: []*schema.Column{CategoriesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "posts_users_posts",
+				Columns:    []*schema.Column{PostsColumns[15]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "ukPostsSlug",
+				Unique:  true,
+				Columns: []*schema.Column{PostsColumns[2]},
+			},
+			{
+				Name:    "idxPostsStatusPublishedAt",
+				Unique:  false,
+				Columns: []*schema.Column{PostsColumns[7], PostsColumns[10]},
+			},
+			{
+				Name:    "idxPostsCategoryStatus",
+				Unique:  false,
+				Columns: []*schema.Column{PostsColumns[14], PostsColumns[7]},
+			},
+			{
+				Name:    "idxPostsAuthorId",
+				Unique:  false,
+				Columns: []*schema.Column{PostsColumns[15]},
+			},
+			{
+				Name:    "idxPostsIsPinnedPublishedAt",
+				Unique:  false,
+				Columns: []*schema.Column{PostsColumns[8], PostsColumns[10]},
+			},
+		},
+	}
+	// PostTagsColumns holds the columns for the "postTags" table.
+	PostTagsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "createdAt", Type: field.TypeTime},
+		{Name: "postId", Type: field.TypeUint64},
+		{Name: "tagId", Type: field.TypeUint64},
+	}
+	// PostTagsTable holds the schema information for the "postTags" table.
+	PostTagsTable = &schema.Table{
+		Name:       "postTags",
+		Columns:    PostTagsColumns,
+		PrimaryKey: []*schema.Column{PostTagsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "postTags_posts_post",
+				Columns:    []*schema.Column{PostTagsColumns[2]},
+				RefColumns: []*schema.Column{PostsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "postTags_tags_tag",
+				Columns:    []*schema.Column{PostTagsColumns[3]},
+				RefColumns: []*schema.Column{TagsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "pkPostTags",
+				Unique:  true,
+				Columns: []*schema.Column{PostTagsColumns[2], PostTagsColumns[3]},
+			},
+			{
+				Name:    "idxPostTagsTagId",
+				Unique:  false,
+				Columns: []*schema.Column{PostTagsColumns[3]},
+			},
+		},
+	}
+	// SiteSettingsColumns holds the columns for the "siteSettings" table.
+	SiteSettingsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUint64, Increment: true},
+		{Name: "key", Type: field.TypeString, Size: 96},
+		{Name: "value", Type: field.TypeJSON},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 255},
+		{Name: "createdAt", Type: field.TypeTime},
+		{Name: "updatedAt", Type: field.TypeTime},
+	}
+	// SiteSettingsTable holds the schema information for the "siteSettings" table.
+	SiteSettingsTable = &schema.Table{
+		Name:       "siteSettings",
+		Columns:    SiteSettingsColumns,
+		PrimaryKey: []*schema.Column{SiteSettingsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "ukSiteSettingsKey",
+				Unique:  true,
+				Columns: []*schema.Column{SiteSettingsColumns[1]},
+			},
+		},
+	}
+	// TagsColumns holds the columns for the "tags" table.
+	TagsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUint64, Increment: true},
+		{Name: "name", Type: field.TypeString, Size: 64},
+		{Name: "slug", Type: field.TypeString, Unique: true, Size: 96},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 255, Default: ""},
+		{Name: "sort", Type: field.TypeInt, Default: 100},
+		{Name: "visible", Type: field.TypeBool, Default: true},
+		{Name: "createdAt", Type: field.TypeTime},
+		{Name: "updatedAt", Type: field.TypeTime},
+		{Name: "deletedAt", Type: field.TypeTime, Nullable: true},
+	}
+	// TagsTable holds the schema information for the "tags" table.
+	TagsTable = &schema.Table{
+		Name:       "tags",
+		Columns:    TagsColumns,
+		PrimaryKey: []*schema.Column{TagsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "ukTagsSlug",
+				Unique:  true,
+				Columns: []*schema.Column{TagsColumns[2]},
+			},
+			{
+				Name:    "idxTagsVisibleSort",
+				Unique:  false,
+				Columns: []*schema.Column{TagsColumns[5], TagsColumns[4]},
+			},
+		},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUint64, Increment: true},
@@ -95,17 +342,48 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		CategoriesTable,
+		CommentsTable,
 		DictItemsTable,
 		OperationLogsTable,
+		PostsTable,
+		PostTagsTable,
+		SiteSettingsTable,
+		TagsTable,
 		UsersTable,
 	}
 )
 
 func init() {
+	CategoriesTable.Annotation = &entsql.Annotation{
+		Table: "categories",
+	}
+	CommentsTable.ForeignKeys[0].RefTable = CommentsTable
+	CommentsTable.ForeignKeys[1].RefTable = PostsTable
+	CommentsTable.ForeignKeys[2].RefTable = UsersTable
+	CommentsTable.Annotation = &entsql.Annotation{
+		Table: "comments",
+	}
 	DictItemsTable.Annotation = &entsql.Annotation{
 		Table: "dictItems",
 	}
 	OperationLogsTable.Annotation = &entsql.Annotation{
 		Table: "operationLogs",
+	}
+	PostsTable.ForeignKeys[0].RefTable = CategoriesTable
+	PostsTable.ForeignKeys[1].RefTable = UsersTable
+	PostsTable.Annotation = &entsql.Annotation{
+		Table: "posts",
+	}
+	PostTagsTable.ForeignKeys[0].RefTable = PostsTable
+	PostTagsTable.ForeignKeys[1].RefTable = TagsTable
+	PostTagsTable.Annotation = &entsql.Annotation{
+		Table: "postTags",
+	}
+	SiteSettingsTable.Annotation = &entsql.Annotation{
+		Table: "siteSettings",
+	}
+	TagsTable.Annotation = &entsql.Annotation{
+		Table: "tags",
 	}
 }

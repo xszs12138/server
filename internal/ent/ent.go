@@ -3,8 +3,14 @@
 package ent
 
 import (
+	"blog-server/internal/ent/category"
+	"blog-server/internal/ent/comment"
 	"blog-server/internal/ent/dictitem"
 	"blog-server/internal/ent/operationlog"
+	"blog-server/internal/ent/post"
+	"blog-server/internal/ent/posttag"
+	"blog-server/internal/ent/sitesetting"
+	"blog-server/internal/ent/tag"
 	"blog-server/internal/ent/user"
 	"context"
 	"errors"
@@ -75,8 +81,14 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
+			category.Table:     category.ValidColumn,
+			comment.Table:      comment.ValidColumn,
 			dictitem.Table:     dictitem.ValidColumn,
 			operationlog.Table: operationlog.ValidColumn,
+			post.Table:         post.ValidColumn,
+			posttag.Table:      posttag.ValidColumn,
+			sitesetting.Table:  sitesetting.ValidColumn,
+			tag.Table:          tag.ValidColumn,
 			user.Table:         user.ValidColumn,
 		})
 	})
