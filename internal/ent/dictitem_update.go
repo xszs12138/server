@@ -63,6 +63,26 @@ func (_u *DictItemUpdate) AddValue(v int) *DictItemUpdate {
 	return _u
 }
 
+// SetCode sets the "code" field.
+func (_u *DictItemUpdate) SetCode(v string) *DictItemUpdate {
+	_u.mutation.SetCode(v)
+	return _u
+}
+
+// SetNillableCode sets the "code" field if the given value is not nil.
+func (_u *DictItemUpdate) SetNillableCode(v *string) *DictItemUpdate {
+	if v != nil {
+		_u.SetCode(*v)
+	}
+	return _u
+}
+
+// ClearCode clears the value of the "code" field.
+func (_u *DictItemUpdate) ClearCode() *DictItemUpdate {
+	_u.mutation.ClearCode()
+	return _u
+}
+
 // SetLabel sets the "label" field.
 func (_u *DictItemUpdate) SetLabel(v string) *DictItemUpdate {
 	_u.mutation.SetLabel(v)
@@ -171,6 +191,11 @@ func (_u *DictItemUpdate) check() error {
 			return &ValidationError{Name: "value", err: fmt.Errorf(`ent: validator failed for field "DictItem.value": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.Code(); ok {
+		if err := dictitem.CodeValidator(v); err != nil {
+			return &ValidationError{Name: "code", err: fmt.Errorf(`ent: validator failed for field "DictItem.code": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Label(); ok {
 		if err := dictitem.LabelValidator(v); err != nil {
 			return &ValidationError{Name: "label", err: fmt.Errorf(`ent: validator failed for field "DictItem.label": %w`, err)}
@@ -199,6 +224,12 @@ func (_u *DictItemUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.AddedValue(); ok {
 		_spec.AddField(dictitem.FieldValue, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.Code(); ok {
+		_spec.SetField(dictitem.FieldCode, field.TypeString, value)
+	}
+	if _u.mutation.CodeCleared() {
+		_spec.ClearField(dictitem.FieldCode, field.TypeString)
 	}
 	if value, ok := _u.mutation.Label(); ok {
 		_spec.SetField(dictitem.FieldLabel, field.TypeString, value)
@@ -267,6 +298,26 @@ func (_u *DictItemUpdateOne) SetNillableValue(v *int) *DictItemUpdateOne {
 // AddValue adds value to the "value" field.
 func (_u *DictItemUpdateOne) AddValue(v int) *DictItemUpdateOne {
 	_u.mutation.AddValue(v)
+	return _u
+}
+
+// SetCode sets the "code" field.
+func (_u *DictItemUpdateOne) SetCode(v string) *DictItemUpdateOne {
+	_u.mutation.SetCode(v)
+	return _u
+}
+
+// SetNillableCode sets the "code" field if the given value is not nil.
+func (_u *DictItemUpdateOne) SetNillableCode(v *string) *DictItemUpdateOne {
+	if v != nil {
+		_u.SetCode(*v)
+	}
+	return _u
+}
+
+// ClearCode clears the value of the "code" field.
+func (_u *DictItemUpdateOne) ClearCode() *DictItemUpdateOne {
+	_u.mutation.ClearCode()
 	return _u
 }
 
@@ -391,6 +442,11 @@ func (_u *DictItemUpdateOne) check() error {
 			return &ValidationError{Name: "value", err: fmt.Errorf(`ent: validator failed for field "DictItem.value": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.Code(); ok {
+		if err := dictitem.CodeValidator(v); err != nil {
+			return &ValidationError{Name: "code", err: fmt.Errorf(`ent: validator failed for field "DictItem.code": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Label(); ok {
 		if err := dictitem.LabelValidator(v); err != nil {
 			return &ValidationError{Name: "label", err: fmt.Errorf(`ent: validator failed for field "DictItem.label": %w`, err)}
@@ -436,6 +492,12 @@ func (_u *DictItemUpdateOne) sqlSave(ctx context.Context) (_node *DictItem, err 
 	}
 	if value, ok := _u.mutation.AddedValue(); ok {
 		_spec.AddField(dictitem.FieldValue, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.Code(); ok {
+		_spec.SetField(dictitem.FieldCode, field.TypeString, value)
+	}
+	if _u.mutation.CodeCleared() {
+		_spec.ClearField(dictitem.FieldCode, field.TypeString)
 	}
 	if value, ok := _u.mutation.Label(); ok {
 		_spec.SetField(dictitem.FieldLabel, field.TypeString, value)

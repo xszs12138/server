@@ -32,6 +32,20 @@ func (_c *DictItemCreate) SetValue(v int) *DictItemCreate {
 	return _c
 }
 
+// SetCode sets the "code" field.
+func (_c *DictItemCreate) SetCode(v string) *DictItemCreate {
+	_c.mutation.SetCode(v)
+	return _c
+}
+
+// SetNillableCode sets the "code" field if the given value is not nil.
+func (_c *DictItemCreate) SetNillableCode(v *string) *DictItemCreate {
+	if v != nil {
+		_c.SetCode(*v)
+	}
+	return _c
+}
+
 // SetLabel sets the "label" field.
 func (_c *DictItemCreate) SetLabel(v string) *DictItemCreate {
 	_c.mutation.SetLabel(v)
@@ -171,6 +185,11 @@ func (_c *DictItemCreate) check() error {
 			return &ValidationError{Name: "value", err: fmt.Errorf(`ent: validator failed for field "DictItem.value": %w`, err)}
 		}
 	}
+	if v, ok := _c.mutation.Code(); ok {
+		if err := dictitem.CodeValidator(v); err != nil {
+			return &ValidationError{Name: "code", err: fmt.Errorf(`ent: validator failed for field "DictItem.code": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.Label(); !ok {
 		return &ValidationError{Name: "label", err: errors.New(`ent: missing required field "DictItem.label"`)}
 	}
@@ -230,6 +249,10 @@ func (_c *DictItemCreate) createSpec() (*DictItem, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Value(); ok {
 		_spec.SetField(dictitem.FieldValue, field.TypeInt, value)
 		_node.Value = value
+	}
+	if value, ok := _c.mutation.Code(); ok {
+		_spec.SetField(dictitem.FieldCode, field.TypeString, value)
+		_node.Code = &value
 	}
 	if value, ok := _c.mutation.Label(); ok {
 		_spec.SetField(dictitem.FieldLabel, field.TypeString, value)

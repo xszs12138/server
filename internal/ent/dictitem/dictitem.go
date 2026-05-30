@@ -17,6 +17,8 @@ const (
 	FieldDictType = "dictType"
 	// FieldValue holds the string denoting the value field in the database.
 	FieldValue = "value"
+	// FieldCode holds the string denoting the code field in the database.
+	FieldCode = "code"
 	// FieldLabel holds the string denoting the label field in the database.
 	FieldLabel = "label"
 	// FieldEnabled holds the string denoting the enabled field in the database.
@@ -36,6 +38,7 @@ var Columns = []string{
 	FieldID,
 	FieldDictType,
 	FieldValue,
+	FieldCode,
 	FieldLabel,
 	FieldEnabled,
 	FieldSort,
@@ -58,6 +61,8 @@ var (
 	DictTypeValidator func(string) error
 	// ValueValidator is a validator for the "value" field. It is called by the builders before save.
 	ValueValidator func(int) error
+	// CodeValidator is a validator for the "code" field. It is called by the builders before save.
+	CodeValidator func(string) error
 	// LabelValidator is a validator for the "label" field. It is called by the builders before save.
 	LabelValidator func(string) error
 	// DefaultEnabled holds the default value on creation for the "enabled" field.
@@ -88,6 +93,11 @@ func ByDictType(opts ...sql.OrderTermOption) OrderOption {
 // ByValue orders the results by the value field.
 func ByValue(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldValue, opts...).ToFunc()
+}
+
+// ByCode orders the results by the code field.
+func ByCode(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCode, opts...).ToFunc()
 }
 
 // ByLabel orders the results by the label field.

@@ -180,23 +180,6 @@ func (svc *AuthService) Logout(ctx context.Context, authorization string, meta d
 	return nil
 }
 
-func (svc *AuthService) CreateDictItem(ctx context.Context, req dto.DictItemRequest) (*dto.DictItem, error) {
-	dict, err := svc.dictItems.Create(ctx, model.DictItem{
-		DictType: req.DictType,
-		Value:    req.Value,
-		Label:    req.Label,
-		Enabled:  req.Enabled,
-		Sort:     req.Sort,
-	})
-	if err != nil {
-		if errors.Is(err, dao.ErrDictItemAlreadyExists) {
-			return nil, ErrDictItemAlreadyExists
-		}
-		return nil, err
-	}
-	return toDictItemDTO(dict), nil
-}
-
 func (svc *AuthService) EnsureAuthenticated(ctx context.Context, authorization string) error {
 	_, err := svc.authenticate(ctx, authorization)
 	return err
@@ -204,30 +187,6 @@ func (svc *AuthService) EnsureAuthenticated(ctx context.Context, authorization s
 
 func (svc *AuthService) CurrentUser(ctx context.Context, authorization string) (*model.User, error) {
 	return svc.authenticate(ctx, authorization)
-}
-
-func (svc *AuthService) DeleteDictItem(ctx context.Context, id uint64) error {
-	err := svc.dictItems.Delete(ctx, id)
-	if err != nil {
-		if errors.Is(err, dao.ErrDictItemNotFound) {
-			return ErrDictItemNotFound
-		}
-		return err
-	}
-	return nil
-}
-
-func (svc *AuthService) ListDictItems(ctx context.Context, dictType string) ([]dto.DictItem, error) {
-	dicts, err := svc.dictItems.List(ctx, dictType)
-	if err != nil {
-		return nil, err
-	}
-
-	items := make([]dto.DictItem, 0, len(dicts))
-	for _, dict := range dicts {
-		items = append(items, *toDictItemDTO(&dict))
-	}
-	return items, nil
 }
 
 func (svc *AuthService) ListOperationLogs(ctx context.Context, authorization string, page int, pageSize int) (*dto.PageResult[dto.OperationLog], error) {
@@ -258,26 +217,6 @@ func (svc *AuthService) ListOperationLogs(ctx context.Context, authorization str
 		Items: items,
 		Total: total,
 	}, nil
-}
-
-func (svc *AuthService) UpdateDictItem(ctx context.Context, id uint64, req dto.DictItemRequest) (*dto.DictItem, error) {
-	dict, err := svc.dictItems.Update(ctx, id, model.DictItem{
-		DictType: req.DictType,
-		Value:    req.Value,
-		Label:    req.Label,
-		Enabled:  req.Enabled,
-		Sort:     req.Sort,
-	})
-	if err != nil {
-		if errors.Is(err, dao.ErrDictItemNotFound) {
-			return nil, ErrDictItemNotFound
-		}
-		if errors.Is(err, dao.ErrDictItemAlreadyExists) {
-			return nil, ErrDictItemAlreadyExists
-		}
-		return nil, err
-	}
-	return toDictItemDTO(dict), nil
 }
 
 func (svc *AuthService) issueToken(user *model.User) (string, error) {
@@ -436,11 +375,13 @@ func (svc *AuthService) safeRecordOperation(ctx context.Context, user *model.Use
 }
 
 func defaultDictItem(actionValue int) model.DictItem {
+	loginCode := "login"
+	logoutCode := "logout"
 	switch actionValue {
 	case 1:
-		return model.DictItem{DictType: "operation", Value: 1, Label: "登录", Enabled: true, Sort: 1}
+		return model.DictItem{DictType: "operation", Value: 1, Code: &loginCode, Label: "登录", Enabled: true, Sort: 1}
 	case 2:
-		return model.DictItem{DictType: "operation", Value: 2, Label: "退出", Enabled: true, Sort: 2}
+		return model.DictItem{DictType: "operation", Value: 2, Code: &logoutCode, Label: "退出", Enabled: true, Sort: 2}
 	default:
 		return model.DictItem{DictType: "operation", Value: actionValue, Label: "未知操作", Enabled: true, Sort: 100}
 	}
@@ -448,19 +389,6 @@ func defaultDictItem(actionValue int) model.DictItem {
 
 func isSystemOperation(actionValue int) bool {
 	return actionValue == 1 || actionValue == 2
-}
-
-func toDictItemDTO(dict *model.DictItem) *dto.DictItem {
-	return &dto.DictItem{
-		ID:        dict.ID,
-		DictType:  dict.DictType,
-		Value:     dict.Value,
-		Label:     dict.Label,
-		Enabled:   dict.Enabled,
-		Sort:      dict.Sort,
-		CreatedAt: dict.CreatedAt,
-		UpdatedAt: dict.UpdatedAt,
-	}
 }
 
 func ResolveIPRegion(ip string) string {

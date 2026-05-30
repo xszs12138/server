@@ -28,6 +28,10 @@ func Open(ctx context.Context, cfg config.Config) (*ent.Client, error) {
 			client.Close()
 			return nil, err
 		}
+		if err := ensureDictItemsCodeColumn(ctx, db); err != nil {
+			client.Close()
+			return nil, err
+		}
 		if err := client.Schema.Create(ctx); err != nil {
 			client.Close()
 			return nil, err
@@ -37,6 +41,10 @@ func Open(ctx context.Context, cfg config.Config) (*ent.Client, error) {
 			return nil, err
 		}
 		if err := ensureDefaultSiteSettings(ctx, client); err != nil {
+			client.Close()
+			return nil, err
+		}
+		if err := ensureDefaultDictItems(ctx, client); err != nil {
 			client.Close()
 			return nil, err
 		}
@@ -60,6 +68,18 @@ func ensureDefaultSiteSettings(ctx context.Context, client *ent.Client) error {
 			key:         "site.socialLinks",
 			value:       json.RawMessage(`[]`),
 			description: "社交链接",
+		},
+		{
+			key:         "site.about",
+			value:       json.RawMessage(`{"markdown":"# 关于我\n\n在这里写下你的介绍。"}`),
+			description: "关于页 Markdown",
+		},
+		{
+			key: "live.broadcast",
+			value: json.RawMessage(
+				`{"isLive":false,"platform":"bilibili","roomTitle":"","streamTitle":"","subtitle":"","cover":"","streamUrl":""}`,
+			),
+			description: "直播配置",
 		},
 	}
 
@@ -111,7 +131,7 @@ func dropLegacyColumns(ctx context.Context, db *sql.DB) error {
 		table  string
 		column string
 	}{
-		{table: "dictItems", column: "code"},
+		// 勿删除 dictItems.code：旧库 rename 后需保留新的 slug 字段
 		{table: "dictItems", column: "name"},
 		{table: "operationLogs", column: "action"},
 		{table: "operationLogs", column: "actionCode"},

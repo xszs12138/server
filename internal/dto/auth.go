@@ -35,25 +35,6 @@ type AdminUser struct {
 	Email    string `json:"email"`
 }
 
-type DictItemRequest struct {
-	DictType string `json:"dictType" binding:"required"`
-	Value    int    `json:"value" binding:"required"`
-	Label    string `json:"label" binding:"required"`
-	Enabled  bool   `json:"enabled"`
-	Sort     int    `json:"sort"`
-}
-
-type DictItem struct {
-	ID        uint64    `json:"id"`
-	DictType  string    `json:"dictType"`
-	Value     int       `json:"value"`
-	Label     string    `json:"label"`
-	Enabled   bool      `json:"enabled"`
-	Sort      int       `json:"sort"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-}
-
 type OperationLog struct {
 	ID          uint64    `json:"id"`
 	UserID      uint64    `json:"userId"`

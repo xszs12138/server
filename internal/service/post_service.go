@@ -83,10 +83,20 @@ func (svc *PostService) WebGetBySlug(ctx context.Context, slug string) (*dto.Web
 
 	detail := toWebPostDetail(post)
 	if prev != nil {
-		detail.PrevPost = &dto.WebPostNeighbor{Title: prev.Title, Slug: prev.Slug}
+		detail.PrevPost = &dto.WebPostNeighbor{
+			Title:       prev.Title,
+			Slug:        prev.Slug,
+			Cover:       prev.Cover,
+			PublishedAt: prev.PublishedAt,
+		}
 	}
 	if next != nil {
-		detail.NextPost = &dto.WebPostNeighbor{Title: next.Title, Slug: next.Slug}
+		detail.NextPost = &dto.WebPostNeighbor{
+			Title:       next.Title,
+			Slug:        next.Slug,
+			Cover:       next.Cover,
+			PublishedAt: next.PublishedAt,
+		}
 	}
 	return detail, nil
 }
@@ -475,6 +485,9 @@ func buildWebArchives(posts []model.ArchivePost) []dto.WebArchiveYear {
 			ID:          post.ID,
 			Title:       post.Title,
 			Slug:        post.Slug,
+			Cover:       post.Cover,
+			Summary:     post.Summary,
+			ViewCount:   post.ViewCount,
 			PublishedAt: post.PublishedAt,
 		})
 	}

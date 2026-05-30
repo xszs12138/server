@@ -15,6 +15,15 @@ type Comment func(*sql.Selector)
 // DictItem is the predicate function for dictitem builders.
 type DictItem func(*sql.Selector)
 
+// Game is the predicate function for game builders.
+type Game func(*sql.Selector)
+
+// GameMonthlyStat is the predicate function for gamemonthlystat builders.
+type GameMonthlyStat func(*sql.Selector)
+
+// GamePlaytimeSnapshot is the predicate function for gameplaytimesnapshot builders.
+type GamePlaytimeSnapshot func(*sql.Selector)
+
 // OperationLog is the predicate function for operationlog builders.
 type OperationLog func(*sql.Selector)
 

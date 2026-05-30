@@ -28,8 +28,10 @@ type WebPostListItem struct {
 }
 
 type WebPostNeighbor struct {
-	Title string `json:"title"`
-	Slug  string `json:"slug"`
+	Title       string     `json:"title"`
+	Slug        string     `json:"slug"`
+	Cover       string     `json:"cover"`
+	PublishedAt *time.Time `json:"publishedAt"`
 }
 
 type WebPostDetail struct {

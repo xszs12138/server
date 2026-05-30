@@ -1,0 +1,26 @@
+# 复制为 config/config.yaml 后修改（config.yaml 勿提交 Git）
+# cp config/config.example.yaml config/config.yaml
+
+server:
+  addr: ":8080"
+
+database:
+  dsn: "root:password@tcp(127.0.0.1:3306)/xszs_blog?charset=utf8mb4&parseTime=True&loc=Local"
+  autoMigrate: true
+
+jwt:
+  secret: "dev-secret-change-me"
+  expiresHours: 2
+
+steam:
+  apiKey: ""
+  steamId: ""
+  syncLang: schinese
+
+# 7bu 图床（博客相册页代理，Token 勿暴露到前端）
+# 文档：https://7bu.top/page/api-docs.html
+imageBed:
+  apiUrl: https://7bu.top/api/v1
+  token: ""
+  albumId: 0
+  order: newest

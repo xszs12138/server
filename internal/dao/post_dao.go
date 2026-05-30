@@ -127,6 +127,9 @@ func (dao *EntPostDAO) ListPublishedArchive(ctx context.Context) ([]model.Archiv
 			ID:          row.ID,
 			Title:       row.Title,
 			Slug:        row.Slug,
+			Cover:       row.Cover,
+			Summary:     row.Summary,
+			ViewCount:   int(row.ViewCount),
 			PublishedAt: *row.PublishedAt,
 		})
 	}
@@ -210,11 +213,21 @@ func (dao *EntPostDAO) FindNeighbors(ctx context.Context, publishedAt time.Time)
 
 	var prev *model.PostNeighbor
 	if prevRow != nil {
-		prev = &model.PostNeighbor{Title: prevRow.Title, Slug: prevRow.Slug}
+		prev = &model.PostNeighbor{
+			Title:       prevRow.Title,
+			Slug:        prevRow.Slug,
+			Cover:       prevRow.Cover,
+			PublishedAt: prevRow.PublishedAt,
+		}
 	}
 	var next *model.PostNeighbor
 	if nextRow != nil {
-		next = &model.PostNeighbor{Title: nextRow.Title, Slug: nextRow.Slug}
+		next = &model.PostNeighbor{
+			Title:       nextRow.Title,
+			Slug:        nextRow.Slug,
+			Cover:       nextRow.Cover,
+			PublishedAt: nextRow.PublishedAt,
+		}
 	}
 	return prev, next, nil
 }

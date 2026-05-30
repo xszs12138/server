@@ -17,6 +17,7 @@ type DictItemDAO interface {
 	Delete(ctx context.Context, id uint64) error
 	FindByTypeAndValue(ctx context.Context, dictType string, value int) (*model.DictItem, error)
 	List(ctx context.Context, dictType string) ([]model.DictItem, error)
+	ListEnabled(ctx context.Context, dictType string) ([]model.DictItem, error)
 	Update(ctx context.Context, id uint64, item model.DictItem) (*model.DictItem, error)
 }
 
@@ -32,6 +33,7 @@ func (dao *EntDictItemDAO) Create(ctx context.Context, item model.DictItem) (*mo
 	created, err := dao.client.DictItem.Create().
 		SetDictType(item.DictType).
 		SetValue(item.Value).
+		SetNillableCode(item.Code).
 		SetLabel(item.Label).
 		SetEnabled(item.Enabled).
 		SetSort(item.Sort).
@@ -92,10 +94,29 @@ func (dao *EntDictItemDAO) List(ctx context.Context, dictType string) ([]model.D
 	return result, nil
 }
 
+func (dao *EntDictItemDAO) ListEnabled(ctx context.Context, dictType string) ([]model.DictItem, error) {
+	items, err := dao.client.DictItem.Query().
+		Where(
+			entdictitem.DictTypeEQ(dictType),
+			entdictitem.EnabledEQ(true),
+		).
+		Order(ent.Asc(entdictitem.FieldSort), ent.Asc(entdictitem.FieldValue)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]model.DictItem, 0, len(items))
+	for _, item := range items {
+		result = append(result, *toDictItemModel(item))
+	}
+	return result, nil
+}
+
 func (dao *EntDictItemDAO) Update(ctx context.Context, id uint64, item model.DictItem) (*model.DictItem, error) {
 	updated, err := dao.client.DictItem.UpdateOneID(id).
 		SetDictType(item.DictType).
 		SetValue(item.Value).
+		SetNillableCode(item.Code).
 		SetLabel(item.Label).
 		SetEnabled(item.Enabled).
 		SetSort(item.Sort).
@@ -117,6 +138,7 @@ func toDictItemModel(item *ent.DictItem) *model.DictItem {
 		ID:        item.ID,
 		DictType:  item.DictType,
 		Value:     item.Value,
+		Code:      item.Code,
 		Label:     item.Label,
 		Enabled:   item.Enabled,
 		Sort:      item.Sort,

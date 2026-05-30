@@ -45,14 +45,19 @@ type Post struct {
 }
 
 type PostNeighbor struct {
-	Title string
-	Slug  string
+	Title       string
+	Slug        string
+	Cover       string
+	PublishedAt *time.Time
 }
 
 type ArchivePost struct {
 	ID          uint64
 	Title       string
 	Slug        string
+	Cover       string
+	Summary     string
+	ViewCount   int
 	PublishedAt time.Time
 }
 

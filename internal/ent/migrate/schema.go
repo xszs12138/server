@@ -104,6 +104,7 @@ var (
 		{Name: "id", Type: field.TypeUint64, Increment: true},
 		{Name: "dictType", Type: field.TypeString, Size: 64},
 		{Name: "value", Type: field.TypeInt},
+		{Name: "code", Type: field.TypeString, Nullable: true, Size: 64},
 		{Name: "label", Type: field.TypeString, Size: 64},
 		{Name: "enabled", Type: field.TypeBool, Default: true},
 		{Name: "sort", Type: field.TypeInt, Default: 100},
@@ -122,9 +123,99 @@ var (
 				Columns: []*schema.Column{DictItemsColumns[1], DictItemsColumns[2]},
 			},
 			{
+				Name:    "ukDictItemsTypeCode",
+				Unique:  true,
+				Columns: []*schema.Column{DictItemsColumns[1], DictItemsColumns[3]},
+			},
+			{
 				Name:    "idxDictItemsTypeEnabledSort",
 				Unique:  false,
-				Columns: []*schema.Column{DictItemsColumns[1], DictItemsColumns[4], DictItemsColumns[5]},
+				Columns: []*schema.Column{DictItemsColumns[1], DictItemsColumns[5], DictItemsColumns[6]},
+			},
+		},
+	}
+	// GamesColumns holds the columns for the "games" table.
+	GamesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUint64, Increment: true},
+		{Name: "steamAppId", Type: field.TypeUint32, Unique: true},
+		{Name: "name", Type: field.TypeString, Size: 255},
+		{Name: "nameZh", Type: field.TypeString, Nullable: true, Size: 255},
+		{Name: "cover", Type: field.TypeString, Nullable: true, Size: 512, Default: ""},
+		{Name: "genres", Type: field.TypeJSON},
+		{Name: "playtimeMinutes", Type: field.TypeUint32, Default: 0},
+		{Name: "playtime2WeeksMinutes", Type: field.TypeUint32, Default: 0},
+		{Name: "lastPlayedAt", Type: field.TypeTime, Nullable: true},
+		{Name: "achievementUnlocked", Type: field.TypeUint32, Nullable: true},
+		{Name: "achievementTotal", Type: field.TypeUint32, Nullable: true},
+		{Name: "progressPercent", Type: field.TypeUint8, Nullable: true},
+		{Name: "progressSource", Type: field.TypeString, Size: 32, Default: "none"},
+		{Name: "playStatus", Type: field.TypeString, Size: 32, Default: "backlog"},
+		{Name: "isVisible", Type: field.TypeBool, Default: false},
+		{Name: "sort", Type: field.TypeInt, Default: 100},
+		{Name: "syncedAt", Type: field.TypeTime, Nullable: true},
+		{Name: "createdAt", Type: field.TypeTime},
+		{Name: "updatedAt", Type: field.TypeTime},
+	}
+	// GamesTable holds the schema information for the "games" table.
+	GamesTable = &schema.Table{
+		Name:       "games",
+		Columns:    GamesColumns,
+		PrimaryKey: []*schema.Column{GamesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "ukGamesSteamAppId",
+				Unique:  true,
+				Columns: []*schema.Column{GamesColumns[1]},
+			},
+			{
+				Name:    "idxGamesVisibleSort",
+				Unique:  false,
+				Columns: []*schema.Column{GamesColumns[14], GamesColumns[15]},
+			},
+			{
+				Name:    "idxGamesLastPlayedAt",
+				Unique:  false,
+				Columns: []*schema.Column{GamesColumns[8]},
+			},
+		},
+	}
+	// GameMonthlyStatsColumns holds the columns for the "gameMonthlyStats" table.
+	GameMonthlyStatsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUint64, Increment: true},
+		{Name: "yearMonth", Type: field.TypeString, Size: 7},
+		{Name: "totalMinutes", Type: field.TypeUint32, Default: 0},
+		{Name: "updatedAt", Type: field.TypeTime},
+	}
+	// GameMonthlyStatsTable holds the schema information for the "gameMonthlyStats" table.
+	GameMonthlyStatsTable = &schema.Table{
+		Name:       "gameMonthlyStats",
+		Columns:    GameMonthlyStatsColumns,
+		PrimaryKey: []*schema.Column{GameMonthlyStatsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "ukGameMonthlyStatsYearMonth",
+				Unique:  true,
+				Columns: []*schema.Column{GameMonthlyStatsColumns[1]},
+			},
+		},
+	}
+	// GamePlaytimeSnapshotsColumns holds the columns for the "gamePlaytimeSnapshots" table.
+	GamePlaytimeSnapshotsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUint64, Increment: true},
+		{Name: "steamAppId", Type: field.TypeUint32},
+		{Name: "playtimeMinutes", Type: field.TypeUint32},
+		{Name: "snapshotAt", Type: field.TypeTime},
+	}
+	// GamePlaytimeSnapshotsTable holds the schema information for the "gamePlaytimeSnapshots" table.
+	GamePlaytimeSnapshotsTable = &schema.Table{
+		Name:       "gamePlaytimeSnapshots",
+		Columns:    GamePlaytimeSnapshotsColumns,
+		PrimaryKey: []*schema.Column{GamePlaytimeSnapshotsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "idxGamePlaytimeSnapshotsAppIdTime",
+				Unique:  false,
+				Columns: []*schema.Column{GamePlaytimeSnapshotsColumns[1], GamePlaytimeSnapshotsColumns[3]},
 			},
 		},
 	}
@@ -345,6 +436,9 @@ var (
 		CategoriesTable,
 		CommentsTable,
 		DictItemsTable,
+		GamesTable,
+		GameMonthlyStatsTable,
+		GamePlaytimeSnapshotsTable,
 		OperationLogsTable,
 		PostsTable,
 		PostTagsTable,
@@ -366,6 +460,15 @@ func init() {
 	}
 	DictItemsTable.Annotation = &entsql.Annotation{
 		Table: "dictItems",
+	}
+	GamesTable.Annotation = &entsql.Annotation{
+		Table: "games",
+	}
+	GameMonthlyStatsTable.Annotation = &entsql.Annotation{
+		Table: "gameMonthlyStats",
+	}
+	GamePlaytimeSnapshotsTable.Annotation = &entsql.Annotation{
+		Table: "gamePlaytimeSnapshots",
 	}
 	OperationLogsTable.Annotation = &entsql.Annotation{
 		Table: "operationLogs",

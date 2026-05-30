@@ -18,6 +18,12 @@ type Tx struct {
 	Comment *CommentClient
 	// DictItem is the client for interacting with the DictItem builders.
 	DictItem *DictItemClient
+	// Game is the client for interacting with the Game builders.
+	Game *GameClient
+	// GameMonthlyStat is the client for interacting with the GameMonthlyStat builders.
+	GameMonthlyStat *GameMonthlyStatClient
+	// GamePlaytimeSnapshot is the client for interacting with the GamePlaytimeSnapshot builders.
+	GamePlaytimeSnapshot *GamePlaytimeSnapshotClient
 	// OperationLog is the client for interacting with the OperationLog builders.
 	OperationLog *OperationLogClient
 	// Post is the client for interacting with the Post builders.
@@ -164,6 +170,9 @@ func (tx *Tx) init() {
 	tx.Category = NewCategoryClient(tx.config)
 	tx.Comment = NewCommentClient(tx.config)
 	tx.DictItem = NewDictItemClient(tx.config)
+	tx.Game = NewGameClient(tx.config)
+	tx.GameMonthlyStat = NewGameMonthlyStatClient(tx.config)
+	tx.GamePlaytimeSnapshot = NewGamePlaytimeSnapshotClient(tx.config)
 	tx.OperationLog = NewOperationLogClient(tx.config)
 	tx.Post = NewPostClient(tx.config)
 	tx.PostTag = NewPostTagClient(tx.config)

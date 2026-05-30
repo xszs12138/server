@@ -20,6 +20,7 @@ type DictItem struct {
 	ID        uint64
 	DictType  string
 	Value     int
+	Code      *string
 	Label     string
 	Enabled   bool
 	Sort      int

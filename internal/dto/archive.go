@@ -6,6 +6,9 @@ type WebArchivePost struct {
 	ID          uint64    `json:"id"`
 	Title       string    `json:"title"`
 	Slug        string    `json:"slug"`
+	Cover       string    `json:"cover"`
+	Summary     string    `json:"summary"`
+	ViewCount   int       `json:"viewCount"`
 	PublishedAt time.Time `json:"publishedAt"`
 }
 

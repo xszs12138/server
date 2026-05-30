@@ -5,6 +5,8 @@ import (
 	"blog-server/internal/controller"
 	"blog-server/internal/dao"
 	"blog-server/internal/ent"
+	"blog-server/internal/imagebed"
+	"blog-server/internal/livehub"
 	"blog-server/internal/service"
 
 	"github.com/gin-gonic/gin"
@@ -21,6 +23,7 @@ func New(cfg config.Config, client *ent.Client) *gin.Engine {
 	tagDAO := dao.NewEntTagDAO(client)
 	commentDAO := dao.NewEntCommentDAO(client)
 	siteSettingDAO := dao.NewEntSiteSettingDAO(client)
+	gameDAO := dao.NewEntGameDAO(client)
 
 	authService := service.NewAuthService(
 		userDAO,
@@ -29,22 +32,38 @@ func New(cfg config.Config, client *ent.Client) *gin.Engine {
 		cfg.JWTSecret,
 		cfg.TokenDuration,
 	)
+	dictService := service.NewDictService(dictItemDAO, siteSettingDAO, authService)
 	postService := service.NewPostService(postDAO, categoryDAO, tagDAO, authService)
 	categoryService := service.NewCategoryService(categoryDAO, postDAO, authService)
 	tagService := service.NewTagService(tagDAO, postDAO, authService)
 	commentService := service.NewCommentService(commentDAO, postDAO, authService)
-	siteService := service.NewSiteService(siteSettingDAO)
+	siteService := service.NewSiteService(siteSettingDAO, authService)
+	gameService := service.NewGameService(gameDAO, dictItemDAO, authService, cfg)
+	liveHub := livehub.NewHub()
+	liveService := service.NewLiveService(siteSettingDAO, authService, liveHub)
+	imageBedClient := imagebed.NewClient(cfg.ImageBedAPIURL, cfg.ImageBedToken)
+	galleryService := service.NewGalleryService(
+		imageBedClient,
+		cfg.ImageBedAlbumID,
+		cfg.ImageBedOrder,
+	)
 
 	authController := controller.NewAuthController(authService)
+	dictController := controller.NewDictController(dictService)
 	postController := controller.NewPostController(postService)
 	categoryController := controller.NewCategoryController(categoryService)
 	tagController := controller.NewTagController(tagService)
 	commentController := controller.NewCommentController(commentService)
 	siteController := controller.NewSiteController(siteService)
+	gameController := controller.NewGameController(gameService)
+	liveController := controller.NewLiveController(liveService)
+	liveWSController := controller.NewLiveWSController(liveService, liveHub)
+	galleryController := controller.NewGalleryController(galleryService)
 
 	web := engine.Group("/api/web")
 	{
 		web.GET("/site", siteController.WebGetSite)
+		web.GET("/gallery/images", galleryController.WebListImages)
 		web.GET("/posts", postController.WebList)
 		web.GET("/archives", postController.WebArchives)
 		web.GET("/categories", categoryController.WebList)
@@ -52,6 +71,12 @@ func New(cfg config.Config, client *ent.Client) *gin.Engine {
 		web.GET("/posts/:slug/comments", commentController.WebListByPostSlug)
 		web.POST("/posts/:slug/comments", commentController.WebCreate)
 		web.GET("/posts/:slug", postController.WebGetBySlug)
+		web.GET("/games", gameController.WebList)
+		web.GET("/games/genres", gameController.WebListGenres)
+		web.GET("/dictionaries/:dictType/items", dictController.WebListItems)
+		web.GET("/games/sidebar", gameController.WebSidebar)
+		web.GET("/live", liveController.WebGetLive)
+		web.GET("/live/ws", liveWSController.WebLiveWS)
 	}
 
 	admin := engine.Group("/api/admin")
@@ -65,10 +90,14 @@ func New(cfg config.Config, client *ent.Client) *gin.Engine {
 			auth.GET("/me", authController.Me)
 		}
 
-		admin.GET("/dict-items", authController.ListDictItems)
-		admin.POST("/dict-items", authController.CreateDictItem)
-		admin.POST("/dict-items/:id/update", authController.UpdateDictItem)
-		admin.POST("/dict-items/:id/delete", authController.DeleteDictItem)
+		admin.GET("/dictionaries", dictController.AdminListTypes)
+		admin.POST("/dictionaries/:dictType/update", dictController.AdminUpdateType)
+		admin.GET("/dictionaries/:dictType/items", dictController.AdminListItems)
+		admin.POST("/dictionaries/:dictType/items", dictController.AdminCreateItem)
+		admin.GET("/dict-items", dictController.AdminListItems)
+		admin.POST("/dict-items", dictController.AdminCreateItem)
+		admin.POST("/dict-items/:id/update", dictController.AdminUpdateItem)
+		admin.POST("/dict-items/:id/delete", dictController.AdminDeleteItem)
 		admin.GET("/operation-logs", authController.ListOperationLogs)
 
 		admin.GET("/posts", postController.AdminList)
@@ -96,6 +125,17 @@ func New(cfg config.Config, client *ent.Client) *gin.Engine {
 		admin.POST("/comments/:id/reject", commentController.AdminReject)
 		admin.POST("/comments/:id/delete", commentController.AdminDelete)
 		admin.POST("/comments/:id/reply", commentController.AdminReply)
+
+		admin.GET("/games", gameController.AdminList)
+		admin.GET("/games/:id", gameController.AdminGetByID)
+		admin.POST("/games/sync", gameController.AdminSync)
+		admin.POST("/games/:id/update", gameController.AdminUpdate)
+
+		admin.GET("/live", liveController.AdminGetLive)
+		admin.POST("/live/update", liveController.AdminUpdateLive)
+
+		admin.GET("/site-settings", siteController.AdminGetSiteSettings)
+		admin.POST("/site-settings/update", siteController.AdminUpdateSiteSettings)
 	}
 
 	return engine

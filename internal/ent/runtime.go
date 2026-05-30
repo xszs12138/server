@@ -6,6 +6,9 @@ import (
 	"blog-server/internal/ent/category"
 	"blog-server/internal/ent/comment"
 	"blog-server/internal/ent/dictitem"
+	"blog-server/internal/ent/game"
+	"blog-server/internal/ent/gamemonthlystat"
+	"blog-server/internal/ent/gameplaytimesnapshot"
 	"blog-server/internal/ent/operationlog"
 	"blog-server/internal/ent/post"
 	"blog-server/internal/ent/posttag"
@@ -179,8 +182,12 @@ func init() {
 	dictitemDescValue := dictitemFields[2].Descriptor()
 	// dictitem.ValueValidator is a validator for the "value" field. It is called by the builders before save.
 	dictitem.ValueValidator = dictitemDescValue.Validators[0].(func(int) error)
+	// dictitemDescCode is the schema descriptor for code field.
+	dictitemDescCode := dictitemFields[3].Descriptor()
+	// dictitem.CodeValidator is a validator for the "code" field. It is called by the builders before save.
+	dictitem.CodeValidator = dictitemDescCode.Validators[0].(func(string) error)
 	// dictitemDescLabel is the schema descriptor for label field.
-	dictitemDescLabel := dictitemFields[3].Descriptor()
+	dictitemDescLabel := dictitemFields[4].Descriptor()
 	// dictitem.LabelValidator is a validator for the "label" field. It is called by the builders before save.
 	dictitem.LabelValidator = func() func(string) error {
 		validators := dictitemDescLabel.Validators
@@ -198,23 +205,131 @@ func init() {
 		}
 	}()
 	// dictitemDescEnabled is the schema descriptor for enabled field.
-	dictitemDescEnabled := dictitemFields[4].Descriptor()
+	dictitemDescEnabled := dictitemFields[5].Descriptor()
 	// dictitem.DefaultEnabled holds the default value on creation for the enabled field.
 	dictitem.DefaultEnabled = dictitemDescEnabled.Default.(bool)
 	// dictitemDescSort is the schema descriptor for sort field.
-	dictitemDescSort := dictitemFields[5].Descriptor()
+	dictitemDescSort := dictitemFields[6].Descriptor()
 	// dictitem.DefaultSort holds the default value on creation for the sort field.
 	dictitem.DefaultSort = dictitemDescSort.Default.(int)
 	// dictitemDescCreatedAt is the schema descriptor for createdAt field.
-	dictitemDescCreatedAt := dictitemFields[6].Descriptor()
+	dictitemDescCreatedAt := dictitemFields[7].Descriptor()
 	// dictitem.DefaultCreatedAt holds the default value on creation for the createdAt field.
 	dictitem.DefaultCreatedAt = dictitemDescCreatedAt.Default.(func() time.Time)
 	// dictitemDescUpdatedAt is the schema descriptor for updatedAt field.
-	dictitemDescUpdatedAt := dictitemFields[7].Descriptor()
+	dictitemDescUpdatedAt := dictitemFields[8].Descriptor()
 	// dictitem.DefaultUpdatedAt holds the default value on creation for the updatedAt field.
 	dictitem.DefaultUpdatedAt = dictitemDescUpdatedAt.Default.(func() time.Time)
 	// dictitem.UpdateDefaultUpdatedAt holds the default value on update for the updatedAt field.
 	dictitem.UpdateDefaultUpdatedAt = dictitemDescUpdatedAt.UpdateDefault.(func() time.Time)
+	gameFields := schema.Game{}.Fields()
+	_ = gameFields
+	// gameDescName is the schema descriptor for name field.
+	gameDescName := gameFields[2].Descriptor()
+	// game.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	game.NameValidator = func() func(string) error {
+		validators := gameDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// gameDescNameZh is the schema descriptor for nameZh field.
+	gameDescNameZh := gameFields[3].Descriptor()
+	// game.NameZhValidator is a validator for the "nameZh" field. It is called by the builders before save.
+	game.NameZhValidator = gameDescNameZh.Validators[0].(func(string) error)
+	// gameDescCover is the schema descriptor for cover field.
+	gameDescCover := gameFields[4].Descriptor()
+	// game.DefaultCover holds the default value on creation for the cover field.
+	game.DefaultCover = gameDescCover.Default.(string)
+	// game.CoverValidator is a validator for the "cover" field. It is called by the builders before save.
+	game.CoverValidator = gameDescCover.Validators[0].(func(string) error)
+	// gameDescGenres is the schema descriptor for genres field.
+	gameDescGenres := gameFields[5].Descriptor()
+	// game.DefaultGenres holds the default value on creation for the genres field.
+	game.DefaultGenres = gameDescGenres.Default.([]string)
+	// gameDescPlaytimeMinutes is the schema descriptor for playtimeMinutes field.
+	gameDescPlaytimeMinutes := gameFields[6].Descriptor()
+	// game.DefaultPlaytimeMinutes holds the default value on creation for the playtimeMinutes field.
+	game.DefaultPlaytimeMinutes = gameDescPlaytimeMinutes.Default.(uint32)
+	// gameDescPlaytime2WeeksMinutes is the schema descriptor for playtime2WeeksMinutes field.
+	gameDescPlaytime2WeeksMinutes := gameFields[7].Descriptor()
+	// game.DefaultPlaytime2WeeksMinutes holds the default value on creation for the playtime2WeeksMinutes field.
+	game.DefaultPlaytime2WeeksMinutes = gameDescPlaytime2WeeksMinutes.Default.(uint32)
+	// gameDescProgressSource is the schema descriptor for progressSource field.
+	gameDescProgressSource := gameFields[12].Descriptor()
+	// game.DefaultProgressSource holds the default value on creation for the progressSource field.
+	game.DefaultProgressSource = gameDescProgressSource.Default.(string)
+	// game.ProgressSourceValidator is a validator for the "progressSource" field. It is called by the builders before save.
+	game.ProgressSourceValidator = gameDescProgressSource.Validators[0].(func(string) error)
+	// gameDescPlayStatus is the schema descriptor for playStatus field.
+	gameDescPlayStatus := gameFields[13].Descriptor()
+	// game.DefaultPlayStatus holds the default value on creation for the playStatus field.
+	game.DefaultPlayStatus = gameDescPlayStatus.Default.(string)
+	// game.PlayStatusValidator is a validator for the "playStatus" field. It is called by the builders before save.
+	game.PlayStatusValidator = gameDescPlayStatus.Validators[0].(func(string) error)
+	// gameDescIsVisible is the schema descriptor for isVisible field.
+	gameDescIsVisible := gameFields[14].Descriptor()
+	// game.DefaultIsVisible holds the default value on creation for the isVisible field.
+	game.DefaultIsVisible = gameDescIsVisible.Default.(bool)
+	// gameDescSort is the schema descriptor for sort field.
+	gameDescSort := gameFields[15].Descriptor()
+	// game.DefaultSort holds the default value on creation for the sort field.
+	game.DefaultSort = gameDescSort.Default.(int)
+	// gameDescCreatedAt is the schema descriptor for createdAt field.
+	gameDescCreatedAt := gameFields[17].Descriptor()
+	// game.DefaultCreatedAt holds the default value on creation for the createdAt field.
+	game.DefaultCreatedAt = gameDescCreatedAt.Default.(func() time.Time)
+	// gameDescUpdatedAt is the schema descriptor for updatedAt field.
+	gameDescUpdatedAt := gameFields[18].Descriptor()
+	// game.DefaultUpdatedAt holds the default value on creation for the updatedAt field.
+	game.DefaultUpdatedAt = gameDescUpdatedAt.Default.(func() time.Time)
+	// game.UpdateDefaultUpdatedAt holds the default value on update for the updatedAt field.
+	game.UpdateDefaultUpdatedAt = gameDescUpdatedAt.UpdateDefault.(func() time.Time)
+	gamemonthlystatFields := schema.GameMonthlyStat{}.Fields()
+	_ = gamemonthlystatFields
+	// gamemonthlystatDescYearMonth is the schema descriptor for yearMonth field.
+	gamemonthlystatDescYearMonth := gamemonthlystatFields[1].Descriptor()
+	// gamemonthlystat.YearMonthValidator is a validator for the "yearMonth" field. It is called by the builders before save.
+	gamemonthlystat.YearMonthValidator = func() func(string) error {
+		validators := gamemonthlystatDescYearMonth.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(yearMonth string) error {
+			for _, fn := range fns {
+				if err := fn(yearMonth); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// gamemonthlystatDescTotalMinutes is the schema descriptor for totalMinutes field.
+	gamemonthlystatDescTotalMinutes := gamemonthlystatFields[2].Descriptor()
+	// gamemonthlystat.DefaultTotalMinutes holds the default value on creation for the totalMinutes field.
+	gamemonthlystat.DefaultTotalMinutes = gamemonthlystatDescTotalMinutes.Default.(uint32)
+	// gamemonthlystatDescUpdatedAt is the schema descriptor for updatedAt field.
+	gamemonthlystatDescUpdatedAt := gamemonthlystatFields[3].Descriptor()
+	// gamemonthlystat.DefaultUpdatedAt holds the default value on creation for the updatedAt field.
+	gamemonthlystat.DefaultUpdatedAt = gamemonthlystatDescUpdatedAt.Default.(func() time.Time)
+	// gamemonthlystat.UpdateDefaultUpdatedAt holds the default value on update for the updatedAt field.
+	gamemonthlystat.UpdateDefaultUpdatedAt = gamemonthlystatDescUpdatedAt.UpdateDefault.(func() time.Time)
+	gameplaytimesnapshotFields := schema.GamePlaytimeSnapshot{}.Fields()
+	_ = gameplaytimesnapshotFields
+	// gameplaytimesnapshotDescSnapshotAt is the schema descriptor for snapshotAt field.
+	gameplaytimesnapshotDescSnapshotAt := gameplaytimesnapshotFields[3].Descriptor()
+	// gameplaytimesnapshot.DefaultSnapshotAt holds the default value on creation for the snapshotAt field.
+	gameplaytimesnapshot.DefaultSnapshotAt = gameplaytimesnapshotDescSnapshotAt.Default.(func() time.Time)
 	operationlogFields := schema.OperationLog{}.Fields()
 	_ = operationlogFields
 	// operationlogDescUsername is the schema descriptor for username field.

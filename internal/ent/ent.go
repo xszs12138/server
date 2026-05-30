@@ -6,6 +6,9 @@ import (
 	"blog-server/internal/ent/category"
 	"blog-server/internal/ent/comment"
 	"blog-server/internal/ent/dictitem"
+	"blog-server/internal/ent/game"
+	"blog-server/internal/ent/gamemonthlystat"
+	"blog-server/internal/ent/gameplaytimesnapshot"
 	"blog-server/internal/ent/operationlog"
 	"blog-server/internal/ent/post"
 	"blog-server/internal/ent/posttag"
@@ -81,15 +84,18 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			category.Table:     category.ValidColumn,
-			comment.Table:      comment.ValidColumn,
-			dictitem.Table:     dictitem.ValidColumn,
-			operationlog.Table: operationlog.ValidColumn,
-			post.Table:         post.ValidColumn,
-			posttag.Table:      posttag.ValidColumn,
-			sitesetting.Table:  sitesetting.ValidColumn,
-			tag.Table:          tag.ValidColumn,
-			user.Table:         user.ValidColumn,
+			category.Table:             category.ValidColumn,
+			comment.Table:              comment.ValidColumn,
+			dictitem.Table:             dictitem.ValidColumn,
+			game.Table:                 game.ValidColumn,
+			gamemonthlystat.Table:      gamemonthlystat.ValidColumn,
+			gameplaytimesnapshot.Table: gameplaytimesnapshot.ValidColumn,
+			operationlog.Table:         operationlog.ValidColumn,
+			post.Table:                 post.ValidColumn,
+			posttag.Table:              posttag.ValidColumn,
+			sitesetting.Table:          sitesetting.ValidColumn,
+			tag.Table:                  tag.ValidColumn,
+			user.Table:                 user.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

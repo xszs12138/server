@@ -25,6 +25,10 @@ func (DictItem) Fields() []ent.Field {
 			NotEmpty(),
 		field.Int("value").
 			Positive(),
+		field.String("code").
+			MaxLen(64).
+			Optional().
+			Nillable(),
 		field.String("label").
 			MaxLen(64).
 			NotEmpty(),
@@ -52,6 +56,7 @@ func (DictItem) Annotations() []schema.Annotation {
 func (DictItem) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("dictType", "value").Unique().StorageKey("ukDictItemsTypeValue"),
+		index.Fields("dictType", "code").Unique().StorageKey("ukDictItemsTypeCode"),
 		index.Fields("dictType", "enabled", "sort").StorageKey("idxDictItemsTypeEnabledSort"),
 	}
 }

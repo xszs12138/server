@@ -44,6 +44,42 @@ func (f DictItemFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DictItemMutation", m)
 }
 
+// The GameFunc type is an adapter to allow the use of ordinary
+// function as Game mutator.
+type GameFunc func(context.Context, *ent.GameMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f GameFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.GameMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GameMutation", m)
+}
+
+// The GameMonthlyStatFunc type is an adapter to allow the use of ordinary
+// function as GameMonthlyStat mutator.
+type GameMonthlyStatFunc func(context.Context, *ent.GameMonthlyStatMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f GameMonthlyStatFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.GameMonthlyStatMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GameMonthlyStatMutation", m)
+}
+
+// The GamePlaytimeSnapshotFunc type is an adapter to allow the use of ordinary
+// function as GamePlaytimeSnapshot mutator.
+type GamePlaytimeSnapshotFunc func(context.Context, *ent.GamePlaytimeSnapshotMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f GamePlaytimeSnapshotFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.GamePlaytimeSnapshotMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GamePlaytimeSnapshotMutation", m)
+}
+
 // The OperationLogFunc type is an adapter to allow the use of ordinary
 // function as OperationLog mutator.
 type OperationLogFunc func(context.Context, *ent.OperationLogMutation) (ent.Value, error)

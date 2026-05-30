@@ -14,6 +14,9 @@ import (
 	"blog-server/internal/ent/category"
 	"blog-server/internal/ent/comment"
 	"blog-server/internal/ent/dictitem"
+	"blog-server/internal/ent/game"
+	"blog-server/internal/ent/gamemonthlystat"
+	"blog-server/internal/ent/gameplaytimesnapshot"
 	"blog-server/internal/ent/operationlog"
 	"blog-server/internal/ent/post"
 	"blog-server/internal/ent/posttag"
@@ -38,6 +41,12 @@ type Client struct {
 	Comment *CommentClient
 	// DictItem is the client for interacting with the DictItem builders.
 	DictItem *DictItemClient
+	// Game is the client for interacting with the Game builders.
+	Game *GameClient
+	// GameMonthlyStat is the client for interacting with the GameMonthlyStat builders.
+	GameMonthlyStat *GameMonthlyStatClient
+	// GamePlaytimeSnapshot is the client for interacting with the GamePlaytimeSnapshot builders.
+	GamePlaytimeSnapshot *GamePlaytimeSnapshotClient
 	// OperationLog is the client for interacting with the OperationLog builders.
 	OperationLog *OperationLogClient
 	// Post is the client for interacting with the Post builders.
@@ -64,6 +73,9 @@ func (c *Client) init() {
 	c.Category = NewCategoryClient(c.config)
 	c.Comment = NewCommentClient(c.config)
 	c.DictItem = NewDictItemClient(c.config)
+	c.Game = NewGameClient(c.config)
+	c.GameMonthlyStat = NewGameMonthlyStatClient(c.config)
+	c.GamePlaytimeSnapshot = NewGamePlaytimeSnapshotClient(c.config)
 	c.OperationLog = NewOperationLogClient(c.config)
 	c.Post = NewPostClient(c.config)
 	c.PostTag = NewPostTagClient(c.config)
@@ -160,17 +172,20 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:          ctx,
-		config:       cfg,
-		Category:     NewCategoryClient(cfg),
-		Comment:      NewCommentClient(cfg),
-		DictItem:     NewDictItemClient(cfg),
-		OperationLog: NewOperationLogClient(cfg),
-		Post:         NewPostClient(cfg),
-		PostTag:      NewPostTagClient(cfg),
-		SiteSetting:  NewSiteSettingClient(cfg),
-		Tag:          NewTagClient(cfg),
-		User:         NewUserClient(cfg),
+		ctx:                  ctx,
+		config:               cfg,
+		Category:             NewCategoryClient(cfg),
+		Comment:              NewCommentClient(cfg),
+		DictItem:             NewDictItemClient(cfg),
+		Game:                 NewGameClient(cfg),
+		GameMonthlyStat:      NewGameMonthlyStatClient(cfg),
+		GamePlaytimeSnapshot: NewGamePlaytimeSnapshotClient(cfg),
+		OperationLog:         NewOperationLogClient(cfg),
+		Post:                 NewPostClient(cfg),
+		PostTag:              NewPostTagClient(cfg),
+		SiteSetting:          NewSiteSettingClient(cfg),
+		Tag:                  NewTagClient(cfg),
+		User:                 NewUserClient(cfg),
 	}, nil
 }
 
@@ -188,17 +203,20 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:          ctx,
-		config:       cfg,
-		Category:     NewCategoryClient(cfg),
-		Comment:      NewCommentClient(cfg),
-		DictItem:     NewDictItemClient(cfg),
-		OperationLog: NewOperationLogClient(cfg),
-		Post:         NewPostClient(cfg),
-		PostTag:      NewPostTagClient(cfg),
-		SiteSetting:  NewSiteSettingClient(cfg),
-		Tag:          NewTagClient(cfg),
-		User:         NewUserClient(cfg),
+		ctx:                  ctx,
+		config:               cfg,
+		Category:             NewCategoryClient(cfg),
+		Comment:              NewCommentClient(cfg),
+		DictItem:             NewDictItemClient(cfg),
+		Game:                 NewGameClient(cfg),
+		GameMonthlyStat:      NewGameMonthlyStatClient(cfg),
+		GamePlaytimeSnapshot: NewGamePlaytimeSnapshotClient(cfg),
+		OperationLog:         NewOperationLogClient(cfg),
+		Post:                 NewPostClient(cfg),
+		PostTag:              NewPostTagClient(cfg),
+		SiteSetting:          NewSiteSettingClient(cfg),
+		Tag:                  NewTagClient(cfg),
+		User:                 NewUserClient(cfg),
 	}, nil
 }
 
@@ -228,8 +246,9 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Category, c.Comment, c.DictItem, c.OperationLog, c.Post, c.PostTag,
-		c.SiteSetting, c.Tag, c.User,
+		c.Category, c.Comment, c.DictItem, c.Game, c.GameMonthlyStat,
+		c.GamePlaytimeSnapshot, c.OperationLog, c.Post, c.PostTag, c.SiteSetting,
+		c.Tag, c.User,
 	} {
 		n.Use(hooks...)
 	}
@@ -239,8 +258,9 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Category, c.Comment, c.DictItem, c.OperationLog, c.Post, c.PostTag,
-		c.SiteSetting, c.Tag, c.User,
+		c.Category, c.Comment, c.DictItem, c.Game, c.GameMonthlyStat,
+		c.GamePlaytimeSnapshot, c.OperationLog, c.Post, c.PostTag, c.SiteSetting,
+		c.Tag, c.User,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -255,6 +275,12 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Comment.mutate(ctx, m)
 	case *DictItemMutation:
 		return c.DictItem.mutate(ctx, m)
+	case *GameMutation:
+		return c.Game.mutate(ctx, m)
+	case *GameMonthlyStatMutation:
+		return c.GameMonthlyStat.mutate(ctx, m)
+	case *GamePlaytimeSnapshotMutation:
+		return c.GamePlaytimeSnapshot.mutate(ctx, m)
 	case *OperationLogMutation:
 		return c.OperationLog.mutate(ctx, m)
 	case *PostMutation:
@@ -748,6 +774,405 @@ func (c *DictItemClient) mutate(ctx context.Context, m *DictItemMutation) (Value
 		return (&DictItemDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown DictItem mutation op: %q", m.Op())
+	}
+}
+
+// GameClient is a client for the Game schema.
+type GameClient struct {
+	config
+}
+
+// NewGameClient returns a client for the Game from the given config.
+func NewGameClient(c config) *GameClient {
+	return &GameClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `game.Hooks(f(g(h())))`.
+func (c *GameClient) Use(hooks ...Hook) {
+	c.hooks.Game = append(c.hooks.Game, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `game.Intercept(f(g(h())))`.
+func (c *GameClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Game = append(c.inters.Game, interceptors...)
+}
+
+// Create returns a builder for creating a Game entity.
+func (c *GameClient) Create() *GameCreate {
+	mutation := newGameMutation(c.config, OpCreate)
+	return &GameCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Game entities.
+func (c *GameClient) CreateBulk(builders ...*GameCreate) *GameCreateBulk {
+	return &GameCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *GameClient) MapCreateBulk(slice any, setFunc func(*GameCreate, int)) *GameCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &GameCreateBulk{err: fmt.Errorf("calling to GameClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*GameCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &GameCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Game.
+func (c *GameClient) Update() *GameUpdate {
+	mutation := newGameMutation(c.config, OpUpdate)
+	return &GameUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *GameClient) UpdateOne(_m *Game) *GameUpdateOne {
+	mutation := newGameMutation(c.config, OpUpdateOne, withGame(_m))
+	return &GameUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *GameClient) UpdateOneID(id uint64) *GameUpdateOne {
+	mutation := newGameMutation(c.config, OpUpdateOne, withGameID(id))
+	return &GameUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Game.
+func (c *GameClient) Delete() *GameDelete {
+	mutation := newGameMutation(c.config, OpDelete)
+	return &GameDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *GameClient) DeleteOne(_m *Game) *GameDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *GameClient) DeleteOneID(id uint64) *GameDeleteOne {
+	builder := c.Delete().Where(game.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &GameDeleteOne{builder}
+}
+
+// Query returns a query builder for Game.
+func (c *GameClient) Query() *GameQuery {
+	return &GameQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeGame},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Game entity by its id.
+func (c *GameClient) Get(ctx context.Context, id uint64) (*Game, error) {
+	return c.Query().Where(game.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *GameClient) GetX(ctx context.Context, id uint64) *Game {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *GameClient) Hooks() []Hook {
+	return c.hooks.Game
+}
+
+// Interceptors returns the client interceptors.
+func (c *GameClient) Interceptors() []Interceptor {
+	return c.inters.Game
+}
+
+func (c *GameClient) mutate(ctx context.Context, m *GameMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&GameCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&GameUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&GameUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&GameDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Game mutation op: %q", m.Op())
+	}
+}
+
+// GameMonthlyStatClient is a client for the GameMonthlyStat schema.
+type GameMonthlyStatClient struct {
+	config
+}
+
+// NewGameMonthlyStatClient returns a client for the GameMonthlyStat from the given config.
+func NewGameMonthlyStatClient(c config) *GameMonthlyStatClient {
+	return &GameMonthlyStatClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `gamemonthlystat.Hooks(f(g(h())))`.
+func (c *GameMonthlyStatClient) Use(hooks ...Hook) {
+	c.hooks.GameMonthlyStat = append(c.hooks.GameMonthlyStat, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `gamemonthlystat.Intercept(f(g(h())))`.
+func (c *GameMonthlyStatClient) Intercept(interceptors ...Interceptor) {
+	c.inters.GameMonthlyStat = append(c.inters.GameMonthlyStat, interceptors...)
+}
+
+// Create returns a builder for creating a GameMonthlyStat entity.
+func (c *GameMonthlyStatClient) Create() *GameMonthlyStatCreate {
+	mutation := newGameMonthlyStatMutation(c.config, OpCreate)
+	return &GameMonthlyStatCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of GameMonthlyStat entities.
+func (c *GameMonthlyStatClient) CreateBulk(builders ...*GameMonthlyStatCreate) *GameMonthlyStatCreateBulk {
+	return &GameMonthlyStatCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *GameMonthlyStatClient) MapCreateBulk(slice any, setFunc func(*GameMonthlyStatCreate, int)) *GameMonthlyStatCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &GameMonthlyStatCreateBulk{err: fmt.Errorf("calling to GameMonthlyStatClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*GameMonthlyStatCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &GameMonthlyStatCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for GameMonthlyStat.
+func (c *GameMonthlyStatClient) Update() *GameMonthlyStatUpdate {
+	mutation := newGameMonthlyStatMutation(c.config, OpUpdate)
+	return &GameMonthlyStatUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *GameMonthlyStatClient) UpdateOne(_m *GameMonthlyStat) *GameMonthlyStatUpdateOne {
+	mutation := newGameMonthlyStatMutation(c.config, OpUpdateOne, withGameMonthlyStat(_m))
+	return &GameMonthlyStatUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *GameMonthlyStatClient) UpdateOneID(id uint64) *GameMonthlyStatUpdateOne {
+	mutation := newGameMonthlyStatMutation(c.config, OpUpdateOne, withGameMonthlyStatID(id))
+	return &GameMonthlyStatUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for GameMonthlyStat.
+func (c *GameMonthlyStatClient) Delete() *GameMonthlyStatDelete {
+	mutation := newGameMonthlyStatMutation(c.config, OpDelete)
+	return &GameMonthlyStatDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *GameMonthlyStatClient) DeleteOne(_m *GameMonthlyStat) *GameMonthlyStatDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *GameMonthlyStatClient) DeleteOneID(id uint64) *GameMonthlyStatDeleteOne {
+	builder := c.Delete().Where(gamemonthlystat.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &GameMonthlyStatDeleteOne{builder}
+}
+
+// Query returns a query builder for GameMonthlyStat.
+func (c *GameMonthlyStatClient) Query() *GameMonthlyStatQuery {
+	return &GameMonthlyStatQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeGameMonthlyStat},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a GameMonthlyStat entity by its id.
+func (c *GameMonthlyStatClient) Get(ctx context.Context, id uint64) (*GameMonthlyStat, error) {
+	return c.Query().Where(gamemonthlystat.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *GameMonthlyStatClient) GetX(ctx context.Context, id uint64) *GameMonthlyStat {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *GameMonthlyStatClient) Hooks() []Hook {
+	return c.hooks.GameMonthlyStat
+}
+
+// Interceptors returns the client interceptors.
+func (c *GameMonthlyStatClient) Interceptors() []Interceptor {
+	return c.inters.GameMonthlyStat
+}
+
+func (c *GameMonthlyStatClient) mutate(ctx context.Context, m *GameMonthlyStatMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&GameMonthlyStatCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&GameMonthlyStatUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&GameMonthlyStatUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&GameMonthlyStatDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown GameMonthlyStat mutation op: %q", m.Op())
+	}
+}
+
+// GamePlaytimeSnapshotClient is a client for the GamePlaytimeSnapshot schema.
+type GamePlaytimeSnapshotClient struct {
+	config
+}
+
+// NewGamePlaytimeSnapshotClient returns a client for the GamePlaytimeSnapshot from the given config.
+func NewGamePlaytimeSnapshotClient(c config) *GamePlaytimeSnapshotClient {
+	return &GamePlaytimeSnapshotClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `gameplaytimesnapshot.Hooks(f(g(h())))`.
+func (c *GamePlaytimeSnapshotClient) Use(hooks ...Hook) {
+	c.hooks.GamePlaytimeSnapshot = append(c.hooks.GamePlaytimeSnapshot, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `gameplaytimesnapshot.Intercept(f(g(h())))`.
+func (c *GamePlaytimeSnapshotClient) Intercept(interceptors ...Interceptor) {
+	c.inters.GamePlaytimeSnapshot = append(c.inters.GamePlaytimeSnapshot, interceptors...)
+}
+
+// Create returns a builder for creating a GamePlaytimeSnapshot entity.
+func (c *GamePlaytimeSnapshotClient) Create() *GamePlaytimeSnapshotCreate {
+	mutation := newGamePlaytimeSnapshotMutation(c.config, OpCreate)
+	return &GamePlaytimeSnapshotCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of GamePlaytimeSnapshot entities.
+func (c *GamePlaytimeSnapshotClient) CreateBulk(builders ...*GamePlaytimeSnapshotCreate) *GamePlaytimeSnapshotCreateBulk {
+	return &GamePlaytimeSnapshotCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *GamePlaytimeSnapshotClient) MapCreateBulk(slice any, setFunc func(*GamePlaytimeSnapshotCreate, int)) *GamePlaytimeSnapshotCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &GamePlaytimeSnapshotCreateBulk{err: fmt.Errorf("calling to GamePlaytimeSnapshotClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*GamePlaytimeSnapshotCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &GamePlaytimeSnapshotCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for GamePlaytimeSnapshot.
+func (c *GamePlaytimeSnapshotClient) Update() *GamePlaytimeSnapshotUpdate {
+	mutation := newGamePlaytimeSnapshotMutation(c.config, OpUpdate)
+	return &GamePlaytimeSnapshotUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *GamePlaytimeSnapshotClient) UpdateOne(_m *GamePlaytimeSnapshot) *GamePlaytimeSnapshotUpdateOne {
+	mutation := newGamePlaytimeSnapshotMutation(c.config, OpUpdateOne, withGamePlaytimeSnapshot(_m))
+	return &GamePlaytimeSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *GamePlaytimeSnapshotClient) UpdateOneID(id uint64) *GamePlaytimeSnapshotUpdateOne {
+	mutation := newGamePlaytimeSnapshotMutation(c.config, OpUpdateOne, withGamePlaytimeSnapshotID(id))
+	return &GamePlaytimeSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for GamePlaytimeSnapshot.
+func (c *GamePlaytimeSnapshotClient) Delete() *GamePlaytimeSnapshotDelete {
+	mutation := newGamePlaytimeSnapshotMutation(c.config, OpDelete)
+	return &GamePlaytimeSnapshotDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *GamePlaytimeSnapshotClient) DeleteOne(_m *GamePlaytimeSnapshot) *GamePlaytimeSnapshotDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *GamePlaytimeSnapshotClient) DeleteOneID(id uint64) *GamePlaytimeSnapshotDeleteOne {
+	builder := c.Delete().Where(gameplaytimesnapshot.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &GamePlaytimeSnapshotDeleteOne{builder}
+}
+
+// Query returns a query builder for GamePlaytimeSnapshot.
+func (c *GamePlaytimeSnapshotClient) Query() *GamePlaytimeSnapshotQuery {
+	return &GamePlaytimeSnapshotQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeGamePlaytimeSnapshot},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a GamePlaytimeSnapshot entity by its id.
+func (c *GamePlaytimeSnapshotClient) Get(ctx context.Context, id uint64) (*GamePlaytimeSnapshot, error) {
+	return c.Query().Where(gameplaytimesnapshot.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *GamePlaytimeSnapshotClient) GetX(ctx context.Context, id uint64) *GamePlaytimeSnapshot {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *GamePlaytimeSnapshotClient) Hooks() []Hook {
+	return c.hooks.GamePlaytimeSnapshot
+}
+
+// Interceptors returns the client interceptors.
+func (c *GamePlaytimeSnapshotClient) Interceptors() []Interceptor {
+	return c.inters.GamePlaytimeSnapshot
+}
+
+func (c *GamePlaytimeSnapshotClient) mutate(ctx context.Context, m *GamePlaytimeSnapshotMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&GamePlaytimeSnapshotCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&GamePlaytimeSnapshotUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&GamePlaytimeSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&GamePlaytimeSnapshotDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown GamePlaytimeSnapshot mutation op: %q", m.Op())
 	}
 }
 
@@ -1712,11 +2137,11 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Category, Comment, DictItem, OperationLog, Post, PostTag, SiteSetting, Tag,
-		User []ent.Hook
+		Category, Comment, DictItem, Game, GameMonthlyStat, GamePlaytimeSnapshot,
+		OperationLog, Post, PostTag, SiteSetting, Tag, User []ent.Hook
 	}
 	inters struct {
-		Category, Comment, DictItem, OperationLog, Post, PostTag, SiteSetting, Tag,
-		User []ent.Interceptor
+		Category, Comment, DictItem, Game, GameMonthlyStat, GamePlaytimeSnapshot,
+		OperationLog, Post, PostTag, SiteSetting, Tag, User []ent.Interceptor
 	}
 )

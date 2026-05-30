@@ -21,6 +21,8 @@ type DictItem struct {
 	DictType string `json:"dictType,omitempty"`
 	// Value holds the value of the "value" field.
 	Value int `json:"value,omitempty"`
+	// Code holds the value of the "code" field.
+	Code *string `json:"code,omitempty"`
 	// Label holds the value of the "label" field.
 	Label string `json:"label,omitempty"`
 	// Enabled holds the value of the "enabled" field.
@@ -43,7 +45,7 @@ func (*DictItem) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case dictitem.FieldID, dictitem.FieldValue, dictitem.FieldSort:
 			values[i] = new(sql.NullInt64)
-		case dictitem.FieldDictType, dictitem.FieldLabel:
+		case dictitem.FieldDictType, dictitem.FieldCode, dictitem.FieldLabel:
 			values[i] = new(sql.NullString)
 		case dictitem.FieldCreatedAt, dictitem.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -79,6 +81,13 @@ func (_m *DictItem) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field value", values[i])
 			} else if value.Valid {
 				_m.Value = int(value.Int64)
+			}
+		case dictitem.FieldCode:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field code", values[i])
+			} else if value.Valid {
+				_m.Code = new(string)
+				*_m.Code = value.String
 			}
 		case dictitem.FieldLabel:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -151,6 +160,11 @@ func (_m *DictItem) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("value=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Value))
+	builder.WriteString(", ")
+	if v := _m.Code; v != nil {
+		builder.WriteString("code=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("label=")
 	builder.WriteString(_m.Label)
