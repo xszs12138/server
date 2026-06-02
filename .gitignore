@@ -1,3 +1,4 @@
 config/config.yaml
-go.sum
-go.mod
+/bin/
+/blog-server
+/main

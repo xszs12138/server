@@ -1,0 +1,7 @@
+.git
+.github
+config/config.yaml
+bin/
+blog-server
+main
+*.md
