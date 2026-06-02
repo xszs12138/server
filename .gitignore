@@ -1,2 +1,3 @@
 config/config.yaml
-config.yaml
+go.sum
+go.mod
