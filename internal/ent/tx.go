@@ -24,6 +24,8 @@ type Tx struct {
 	GameMonthlyStat *GameMonthlyStatClient
 	// GamePlaytimeSnapshot is the client for interacting with the GamePlaytimeSnapshot builders.
 	GamePlaytimeSnapshot *GamePlaytimeSnapshotClient
+	// MusicTrack is the client for interacting with the MusicTrack builders.
+	MusicTrack *MusicTrackClient
 	// OperationLog is the client for interacting with the OperationLog builders.
 	OperationLog *OperationLogClient
 	// Post is the client for interacting with the Post builders.
@@ -173,6 +175,7 @@ func (tx *Tx) init() {
 	tx.Game = NewGameClient(tx.config)
 	tx.GameMonthlyStat = NewGameMonthlyStatClient(tx.config)
 	tx.GamePlaytimeSnapshot = NewGamePlaytimeSnapshotClient(tx.config)
+	tx.MusicTrack = NewMusicTrackClient(tx.config)
 	tx.OperationLog = NewOperationLogClient(tx.config)
 	tx.Post = NewPostClient(tx.config)
 	tx.PostTag = NewPostTagClient(tx.config)

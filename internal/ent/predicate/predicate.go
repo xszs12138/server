@@ -24,6 +24,9 @@ type GameMonthlyStat func(*sql.Selector)
 // GamePlaytimeSnapshot is the predicate function for gameplaytimesnapshot builders.
 type GamePlaytimeSnapshot func(*sql.Selector)
 
+// MusicTrack is the predicate function for musictrack builders.
+type MusicTrack func(*sql.Selector)
+
 // OperationLog is the predicate function for operationlog builders.
 type OperationLog func(*sql.Selector)
 

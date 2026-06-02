@@ -17,6 +17,7 @@ import (
 	"blog-server/internal/ent/game"
 	"blog-server/internal/ent/gamemonthlystat"
 	"blog-server/internal/ent/gameplaytimesnapshot"
+	"blog-server/internal/ent/musictrack"
 	"blog-server/internal/ent/operationlog"
 	"blog-server/internal/ent/post"
 	"blog-server/internal/ent/posttag"
@@ -47,6 +48,8 @@ type Client struct {
 	GameMonthlyStat *GameMonthlyStatClient
 	// GamePlaytimeSnapshot is the client for interacting with the GamePlaytimeSnapshot builders.
 	GamePlaytimeSnapshot *GamePlaytimeSnapshotClient
+	// MusicTrack is the client for interacting with the MusicTrack builders.
+	MusicTrack *MusicTrackClient
 	// OperationLog is the client for interacting with the OperationLog builders.
 	OperationLog *OperationLogClient
 	// Post is the client for interacting with the Post builders.
@@ -76,6 +79,7 @@ func (c *Client) init() {
 	c.Game = NewGameClient(c.config)
 	c.GameMonthlyStat = NewGameMonthlyStatClient(c.config)
 	c.GamePlaytimeSnapshot = NewGamePlaytimeSnapshotClient(c.config)
+	c.MusicTrack = NewMusicTrackClient(c.config)
 	c.OperationLog = NewOperationLogClient(c.config)
 	c.Post = NewPostClient(c.config)
 	c.PostTag = NewPostTagClient(c.config)
@@ -180,6 +184,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Game:                 NewGameClient(cfg),
 		GameMonthlyStat:      NewGameMonthlyStatClient(cfg),
 		GamePlaytimeSnapshot: NewGamePlaytimeSnapshotClient(cfg),
+		MusicTrack:           NewMusicTrackClient(cfg),
 		OperationLog:         NewOperationLogClient(cfg),
 		Post:                 NewPostClient(cfg),
 		PostTag:              NewPostTagClient(cfg),
@@ -211,6 +216,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Game:                 NewGameClient(cfg),
 		GameMonthlyStat:      NewGameMonthlyStatClient(cfg),
 		GamePlaytimeSnapshot: NewGamePlaytimeSnapshotClient(cfg),
+		MusicTrack:           NewMusicTrackClient(cfg),
 		OperationLog:         NewOperationLogClient(cfg),
 		Post:                 NewPostClient(cfg),
 		PostTag:              NewPostTagClient(cfg),
@@ -247,8 +253,8 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.Category, c.Comment, c.DictItem, c.Game, c.GameMonthlyStat,
-		c.GamePlaytimeSnapshot, c.OperationLog, c.Post, c.PostTag, c.SiteSetting,
-		c.Tag, c.User,
+		c.GamePlaytimeSnapshot, c.MusicTrack, c.OperationLog, c.Post, c.PostTag,
+		c.SiteSetting, c.Tag, c.User,
 	} {
 		n.Use(hooks...)
 	}
@@ -259,8 +265,8 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.Category, c.Comment, c.DictItem, c.Game, c.GameMonthlyStat,
-		c.GamePlaytimeSnapshot, c.OperationLog, c.Post, c.PostTag, c.SiteSetting,
-		c.Tag, c.User,
+		c.GamePlaytimeSnapshot, c.MusicTrack, c.OperationLog, c.Post, c.PostTag,
+		c.SiteSetting, c.Tag, c.User,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -281,6 +287,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.GameMonthlyStat.mutate(ctx, m)
 	case *GamePlaytimeSnapshotMutation:
 		return c.GamePlaytimeSnapshot.mutate(ctx, m)
+	case *MusicTrackMutation:
+		return c.MusicTrack.mutate(ctx, m)
 	case *OperationLogMutation:
 		return c.OperationLog.mutate(ctx, m)
 	case *PostMutation:
@@ -1173,6 +1181,139 @@ func (c *GamePlaytimeSnapshotClient) mutate(ctx context.Context, m *GamePlaytime
 		return (&GamePlaytimeSnapshotDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown GamePlaytimeSnapshot mutation op: %q", m.Op())
+	}
+}
+
+// MusicTrackClient is a client for the MusicTrack schema.
+type MusicTrackClient struct {
+	config
+}
+
+// NewMusicTrackClient returns a client for the MusicTrack from the given config.
+func NewMusicTrackClient(c config) *MusicTrackClient {
+	return &MusicTrackClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `musictrack.Hooks(f(g(h())))`.
+func (c *MusicTrackClient) Use(hooks ...Hook) {
+	c.hooks.MusicTrack = append(c.hooks.MusicTrack, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `musictrack.Intercept(f(g(h())))`.
+func (c *MusicTrackClient) Intercept(interceptors ...Interceptor) {
+	c.inters.MusicTrack = append(c.inters.MusicTrack, interceptors...)
+}
+
+// Create returns a builder for creating a MusicTrack entity.
+func (c *MusicTrackClient) Create() *MusicTrackCreate {
+	mutation := newMusicTrackMutation(c.config, OpCreate)
+	return &MusicTrackCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of MusicTrack entities.
+func (c *MusicTrackClient) CreateBulk(builders ...*MusicTrackCreate) *MusicTrackCreateBulk {
+	return &MusicTrackCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MusicTrackClient) MapCreateBulk(slice any, setFunc func(*MusicTrackCreate, int)) *MusicTrackCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MusicTrackCreateBulk{err: fmt.Errorf("calling to MusicTrackClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MusicTrackCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MusicTrackCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for MusicTrack.
+func (c *MusicTrackClient) Update() *MusicTrackUpdate {
+	mutation := newMusicTrackMutation(c.config, OpUpdate)
+	return &MusicTrackUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MusicTrackClient) UpdateOne(_m *MusicTrack) *MusicTrackUpdateOne {
+	mutation := newMusicTrackMutation(c.config, OpUpdateOne, withMusicTrack(_m))
+	return &MusicTrackUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MusicTrackClient) UpdateOneID(id uint64) *MusicTrackUpdateOne {
+	mutation := newMusicTrackMutation(c.config, OpUpdateOne, withMusicTrackID(id))
+	return &MusicTrackUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for MusicTrack.
+func (c *MusicTrackClient) Delete() *MusicTrackDelete {
+	mutation := newMusicTrackMutation(c.config, OpDelete)
+	return &MusicTrackDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MusicTrackClient) DeleteOne(_m *MusicTrack) *MusicTrackDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MusicTrackClient) DeleteOneID(id uint64) *MusicTrackDeleteOne {
+	builder := c.Delete().Where(musictrack.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MusicTrackDeleteOne{builder}
+}
+
+// Query returns a query builder for MusicTrack.
+func (c *MusicTrackClient) Query() *MusicTrackQuery {
+	return &MusicTrackQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMusicTrack},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a MusicTrack entity by its id.
+func (c *MusicTrackClient) Get(ctx context.Context, id uint64) (*MusicTrack, error) {
+	return c.Query().Where(musictrack.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MusicTrackClient) GetX(ctx context.Context, id uint64) *MusicTrack {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *MusicTrackClient) Hooks() []Hook {
+	return c.hooks.MusicTrack
+}
+
+// Interceptors returns the client interceptors.
+func (c *MusicTrackClient) Interceptors() []Interceptor {
+	return c.inters.MusicTrack
+}
+
+func (c *MusicTrackClient) mutate(ctx context.Context, m *MusicTrackMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MusicTrackCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MusicTrackUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MusicTrackUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MusicTrackDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown MusicTrack mutation op: %q", m.Op())
 	}
 }
 
@@ -2138,10 +2279,11 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 type (
 	hooks struct {
 		Category, Comment, DictItem, Game, GameMonthlyStat, GamePlaytimeSnapshot,
-		OperationLog, Post, PostTag, SiteSetting, Tag, User []ent.Hook
+		MusicTrack, OperationLog, Post, PostTag, SiteSetting, Tag, User []ent.Hook
 	}
 	inters struct {
 		Category, Comment, DictItem, Game, GameMonthlyStat, GamePlaytimeSnapshot,
-		OperationLog, Post, PostTag, SiteSetting, Tag, User []ent.Interceptor
+		MusicTrack, OperationLog, Post, PostTag, SiteSetting, Tag,
+		User []ent.Interceptor
 	}
 )

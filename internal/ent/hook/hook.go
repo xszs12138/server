@@ -80,6 +80,18 @@ func (f GamePlaytimeSnapshotFunc) Mutate(ctx context.Context, m ent.Mutation) (e
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GamePlaytimeSnapshotMutation", m)
 }
 
+// The MusicTrackFunc type is an adapter to allow the use of ordinary
+// function as MusicTrack mutator.
+type MusicTrackFunc func(context.Context, *ent.MusicTrackMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f MusicTrackFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.MusicTrackMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.MusicTrackMutation", m)
+}
+
 // The OperationLogFunc type is an adapter to allow the use of ordinary
 // function as OperationLog mutator.
 type OperationLogFunc func(context.Context, *ent.OperationLogMutation) (ent.Value, error)

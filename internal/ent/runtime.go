@@ -9,6 +9,7 @@ import (
 	"blog-server/internal/ent/game"
 	"blog-server/internal/ent/gamemonthlystat"
 	"blog-server/internal/ent/gameplaytimesnapshot"
+	"blog-server/internal/ent/musictrack"
 	"blog-server/internal/ent/operationlog"
 	"blog-server/internal/ent/post"
 	"blog-server/internal/ent/posttag"
@@ -330,6 +331,78 @@ func init() {
 	gameplaytimesnapshotDescSnapshotAt := gameplaytimesnapshotFields[3].Descriptor()
 	// gameplaytimesnapshot.DefaultSnapshotAt holds the default value on creation for the snapshotAt field.
 	gameplaytimesnapshot.DefaultSnapshotAt = gameplaytimesnapshotDescSnapshotAt.Default.(func() time.Time)
+	musictrackFields := schema.MusicTrack{}.Fields()
+	_ = musictrackFields
+	// musictrackDescName is the schema descriptor for name field.
+	musictrackDescName := musictrackFields[1].Descriptor()
+	// musictrack.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	musictrack.NameValidator = func() func(string) error {
+		validators := musictrackDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// musictrackDescArtist is the schema descriptor for artist field.
+	musictrackDescArtist := musictrackFields[2].Descriptor()
+	// musictrack.DefaultArtist holds the default value on creation for the artist field.
+	musictrack.DefaultArtist = musictrackDescArtist.Default.(string)
+	// musictrack.ArtistValidator is a validator for the "artist" field. It is called by the builders before save.
+	musictrack.ArtistValidator = musictrackDescArtist.Validators[0].(func(string) error)
+	// musictrackDescAudioUrl is the schema descriptor for audioUrl field.
+	musictrackDescAudioUrl := musictrackFields[3].Descriptor()
+	// musictrack.AudioUrlValidator is a validator for the "audioUrl" field. It is called by the builders before save.
+	musictrack.AudioUrlValidator = func() func(string) error {
+		validators := musictrackDescAudioUrl.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(audioUrl string) error {
+			for _, fn := range fns {
+				if err := fn(audioUrl); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// musictrackDescCoverUrl is the schema descriptor for coverUrl field.
+	musictrackDescCoverUrl := musictrackFields[4].Descriptor()
+	// musictrack.DefaultCoverUrl holds the default value on creation for the coverUrl field.
+	musictrack.DefaultCoverUrl = musictrackDescCoverUrl.Default.(string)
+	// musictrack.CoverUrlValidator is a validator for the "coverUrl" field. It is called by the builders before save.
+	musictrack.CoverUrlValidator = musictrackDescCoverUrl.Validators[0].(func(string) error)
+	// musictrackDescDurationSeconds is the schema descriptor for durationSeconds field.
+	musictrackDescDurationSeconds := musictrackFields[6].Descriptor()
+	// musictrack.DefaultDurationSeconds holds the default value on creation for the durationSeconds field.
+	musictrack.DefaultDurationSeconds = musictrackDescDurationSeconds.Default.(int)
+	// musictrackDescSort is the schema descriptor for sort field.
+	musictrackDescSort := musictrackFields[7].Descriptor()
+	// musictrack.DefaultSort holds the default value on creation for the sort field.
+	musictrack.DefaultSort = musictrackDescSort.Default.(int)
+	// musictrackDescVisible is the schema descriptor for visible field.
+	musictrackDescVisible := musictrackFields[8].Descriptor()
+	// musictrack.DefaultVisible holds the default value on creation for the visible field.
+	musictrack.DefaultVisible = musictrackDescVisible.Default.(bool)
+	// musictrackDescCreatedAt is the schema descriptor for createdAt field.
+	musictrackDescCreatedAt := musictrackFields[9].Descriptor()
+	// musictrack.DefaultCreatedAt holds the default value on creation for the createdAt field.
+	musictrack.DefaultCreatedAt = musictrackDescCreatedAt.Default.(func() time.Time)
+	// musictrackDescUpdatedAt is the schema descriptor for updatedAt field.
+	musictrackDescUpdatedAt := musictrackFields[10].Descriptor()
+	// musictrack.DefaultUpdatedAt holds the default value on creation for the updatedAt field.
+	musictrack.DefaultUpdatedAt = musictrackDescUpdatedAt.Default.(func() time.Time)
+	// musictrack.UpdateDefaultUpdatedAt holds the default value on update for the updatedAt field.
+	musictrack.UpdateDefaultUpdatedAt = musictrackDescUpdatedAt.UpdateDefault.(func() time.Time)
 	operationlogFields := schema.OperationLog{}.Fields()
 	_ = operationlogFields
 	// operationlogDescUsername is the schema descriptor for username field.

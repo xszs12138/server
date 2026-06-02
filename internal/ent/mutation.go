@@ -9,6 +9,7 @@ import (
 	"blog-server/internal/ent/game"
 	"blog-server/internal/ent/gamemonthlystat"
 	"blog-server/internal/ent/gameplaytimesnapshot"
+	"blog-server/internal/ent/musictrack"
 	"blog-server/internal/ent/operationlog"
 	"blog-server/internal/ent/post"
 	"blog-server/internal/ent/posttag"
@@ -42,6 +43,7 @@ const (
 	TypeGame                 = "Game"
 	TypeGameMonthlyStat      = "GameMonthlyStat"
 	TypeGamePlaytimeSnapshot = "GamePlaytimeSnapshot"
+	TypeMusicTrack           = "MusicTrack"
 	TypeOperationLog         = "OperationLog"
 	TypePost                 = "Post"
 	TypePostTag              = "PostTag"
@@ -5723,6 +5725,1007 @@ func (m *GamePlaytimeSnapshotMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *GamePlaytimeSnapshotMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown GamePlaytimeSnapshot edge %s", name)
+}
+
+// MusicTrackMutation represents an operation that mutates the MusicTrack nodes in the graph.
+type MusicTrackMutation struct {
+	config
+	op                 Op
+	typ                string
+	id                 *uint64
+	name               *string
+	artist             *string
+	audioUrl           *string
+	coverUrl           *string
+	lrc                *string
+	durationSeconds    *int
+	adddurationSeconds *int
+	sort               *int
+	addsort            *int
+	visible            *bool
+	createdAt          *time.Time
+	updatedAt          *time.Time
+	deletedAt          *time.Time
+	clearedFields      map[string]struct{}
+	done               bool
+	oldValue           func(context.Context) (*MusicTrack, error)
+	predicates         []predicate.MusicTrack
+}
+
+var _ ent.Mutation = (*MusicTrackMutation)(nil)
+
+// musictrackOption allows management of the mutation configuration using functional options.
+type musictrackOption func(*MusicTrackMutation)
+
+// newMusicTrackMutation creates new mutation for the MusicTrack entity.
+func newMusicTrackMutation(c config, op Op, opts ...musictrackOption) *MusicTrackMutation {
+	m := &MusicTrackMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeMusicTrack,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withMusicTrackID sets the ID field of the mutation.
+func withMusicTrackID(id uint64) musictrackOption {
+	return func(m *MusicTrackMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *MusicTrack
+		)
+		m.oldValue = func(ctx context.Context) (*MusicTrack, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().MusicTrack.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withMusicTrack sets the old MusicTrack of the mutation.
+func withMusicTrack(node *MusicTrack) musictrackOption {
+	return func(m *MusicTrackMutation) {
+		m.oldValue = func(context.Context) (*MusicTrack, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m MusicTrackMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m MusicTrackMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of MusicTrack entities.
+func (m *MusicTrackMutation) SetID(id uint64) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *MusicTrackMutation) ID() (id uint64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *MusicTrackMutation) IDs(ctx context.Context) ([]uint64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uint64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().MusicTrack.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetName sets the "name" field.
+func (m *MusicTrackMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *MusicTrackMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the MusicTrack entity.
+// If the MusicTrack object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MusicTrackMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *MusicTrackMutation) ResetName() {
+	m.name = nil
+}
+
+// SetArtist sets the "artist" field.
+func (m *MusicTrackMutation) SetArtist(s string) {
+	m.artist = &s
+}
+
+// Artist returns the value of the "artist" field in the mutation.
+func (m *MusicTrackMutation) Artist() (r string, exists bool) {
+	v := m.artist
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldArtist returns the old "artist" field's value of the MusicTrack entity.
+// If the MusicTrack object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MusicTrackMutation) OldArtist(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldArtist is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldArtist requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldArtist: %w", err)
+	}
+	return oldValue.Artist, nil
+}
+
+// ResetArtist resets all changes to the "artist" field.
+func (m *MusicTrackMutation) ResetArtist() {
+	m.artist = nil
+}
+
+// SetAudioUrl sets the "audioUrl" field.
+func (m *MusicTrackMutation) SetAudioUrl(s string) {
+	m.audioUrl = &s
+}
+
+// AudioUrl returns the value of the "audioUrl" field in the mutation.
+func (m *MusicTrackMutation) AudioUrl() (r string, exists bool) {
+	v := m.audioUrl
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAudioUrl returns the old "audioUrl" field's value of the MusicTrack entity.
+// If the MusicTrack object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MusicTrackMutation) OldAudioUrl(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAudioUrl is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAudioUrl requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAudioUrl: %w", err)
+	}
+	return oldValue.AudioUrl, nil
+}
+
+// ResetAudioUrl resets all changes to the "audioUrl" field.
+func (m *MusicTrackMutation) ResetAudioUrl() {
+	m.audioUrl = nil
+}
+
+// SetCoverUrl sets the "coverUrl" field.
+func (m *MusicTrackMutation) SetCoverUrl(s string) {
+	m.coverUrl = &s
+}
+
+// CoverUrl returns the value of the "coverUrl" field in the mutation.
+func (m *MusicTrackMutation) CoverUrl() (r string, exists bool) {
+	v := m.coverUrl
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCoverUrl returns the old "coverUrl" field's value of the MusicTrack entity.
+// If the MusicTrack object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MusicTrackMutation) OldCoverUrl(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCoverUrl is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCoverUrl requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCoverUrl: %w", err)
+	}
+	return oldValue.CoverUrl, nil
+}
+
+// ClearCoverUrl clears the value of the "coverUrl" field.
+func (m *MusicTrackMutation) ClearCoverUrl() {
+	m.coverUrl = nil
+	m.clearedFields[musictrack.FieldCoverUrl] = struct{}{}
+}
+
+// CoverUrlCleared returns if the "coverUrl" field was cleared in this mutation.
+func (m *MusicTrackMutation) CoverUrlCleared() bool {
+	_, ok := m.clearedFields[musictrack.FieldCoverUrl]
+	return ok
+}
+
+// ResetCoverUrl resets all changes to the "coverUrl" field.
+func (m *MusicTrackMutation) ResetCoverUrl() {
+	m.coverUrl = nil
+	delete(m.clearedFields, musictrack.FieldCoverUrl)
+}
+
+// SetLrc sets the "lrc" field.
+func (m *MusicTrackMutation) SetLrc(s string) {
+	m.lrc = &s
+}
+
+// Lrc returns the value of the "lrc" field in the mutation.
+func (m *MusicTrackMutation) Lrc() (r string, exists bool) {
+	v := m.lrc
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLrc returns the old "lrc" field's value of the MusicTrack entity.
+// If the MusicTrack object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MusicTrackMutation) OldLrc(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLrc is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLrc requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLrc: %w", err)
+	}
+	return oldValue.Lrc, nil
+}
+
+// ClearLrc clears the value of the "lrc" field.
+func (m *MusicTrackMutation) ClearLrc() {
+	m.lrc = nil
+	m.clearedFields[musictrack.FieldLrc] = struct{}{}
+}
+
+// LrcCleared returns if the "lrc" field was cleared in this mutation.
+func (m *MusicTrackMutation) LrcCleared() bool {
+	_, ok := m.clearedFields[musictrack.FieldLrc]
+	return ok
+}
+
+// ResetLrc resets all changes to the "lrc" field.
+func (m *MusicTrackMutation) ResetLrc() {
+	m.lrc = nil
+	delete(m.clearedFields, musictrack.FieldLrc)
+}
+
+// SetDurationSeconds sets the "durationSeconds" field.
+func (m *MusicTrackMutation) SetDurationSeconds(i int) {
+	m.durationSeconds = &i
+	m.adddurationSeconds = nil
+}
+
+// DurationSeconds returns the value of the "durationSeconds" field in the mutation.
+func (m *MusicTrackMutation) DurationSeconds() (r int, exists bool) {
+	v := m.durationSeconds
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDurationSeconds returns the old "durationSeconds" field's value of the MusicTrack entity.
+// If the MusicTrack object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MusicTrackMutation) OldDurationSeconds(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDurationSeconds is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDurationSeconds requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDurationSeconds: %w", err)
+	}
+	return oldValue.DurationSeconds, nil
+}
+
+// AddDurationSeconds adds i to the "durationSeconds" field.
+func (m *MusicTrackMutation) AddDurationSeconds(i int) {
+	if m.adddurationSeconds != nil {
+		*m.adddurationSeconds += i
+	} else {
+		m.adddurationSeconds = &i
+	}
+}
+
+// AddedDurationSeconds returns the value that was added to the "durationSeconds" field in this mutation.
+func (m *MusicTrackMutation) AddedDurationSeconds() (r int, exists bool) {
+	v := m.adddurationSeconds
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetDurationSeconds resets all changes to the "durationSeconds" field.
+func (m *MusicTrackMutation) ResetDurationSeconds() {
+	m.durationSeconds = nil
+	m.adddurationSeconds = nil
+}
+
+// SetSort sets the "sort" field.
+func (m *MusicTrackMutation) SetSort(i int) {
+	m.sort = &i
+	m.addsort = nil
+}
+
+// Sort returns the value of the "sort" field in the mutation.
+func (m *MusicTrackMutation) Sort() (r int, exists bool) {
+	v := m.sort
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSort returns the old "sort" field's value of the MusicTrack entity.
+// If the MusicTrack object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MusicTrackMutation) OldSort(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSort is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSort requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSort: %w", err)
+	}
+	return oldValue.Sort, nil
+}
+
+// AddSort adds i to the "sort" field.
+func (m *MusicTrackMutation) AddSort(i int) {
+	if m.addsort != nil {
+		*m.addsort += i
+	} else {
+		m.addsort = &i
+	}
+}
+
+// AddedSort returns the value that was added to the "sort" field in this mutation.
+func (m *MusicTrackMutation) AddedSort() (r int, exists bool) {
+	v := m.addsort
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetSort resets all changes to the "sort" field.
+func (m *MusicTrackMutation) ResetSort() {
+	m.sort = nil
+	m.addsort = nil
+}
+
+// SetVisible sets the "visible" field.
+func (m *MusicTrackMutation) SetVisible(b bool) {
+	m.visible = &b
+}
+
+// Visible returns the value of the "visible" field in the mutation.
+func (m *MusicTrackMutation) Visible() (r bool, exists bool) {
+	v := m.visible
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVisible returns the old "visible" field's value of the MusicTrack entity.
+// If the MusicTrack object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MusicTrackMutation) OldVisible(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVisible is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVisible requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVisible: %w", err)
+	}
+	return oldValue.Visible, nil
+}
+
+// ResetVisible resets all changes to the "visible" field.
+func (m *MusicTrackMutation) ResetVisible() {
+	m.visible = nil
+}
+
+// SetCreatedAt sets the "createdAt" field.
+func (m *MusicTrackMutation) SetCreatedAt(t time.Time) {
+	m.createdAt = &t
+}
+
+// CreatedAt returns the value of the "createdAt" field in the mutation.
+func (m *MusicTrackMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.createdAt
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "createdAt" field's value of the MusicTrack entity.
+// If the MusicTrack object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MusicTrackMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "createdAt" field.
+func (m *MusicTrackMutation) ResetCreatedAt() {
+	m.createdAt = nil
+}
+
+// SetUpdatedAt sets the "updatedAt" field.
+func (m *MusicTrackMutation) SetUpdatedAt(t time.Time) {
+	m.updatedAt = &t
+}
+
+// UpdatedAt returns the value of the "updatedAt" field in the mutation.
+func (m *MusicTrackMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updatedAt
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updatedAt" field's value of the MusicTrack entity.
+// If the MusicTrack object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MusicTrackMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updatedAt" field.
+func (m *MusicTrackMutation) ResetUpdatedAt() {
+	m.updatedAt = nil
+}
+
+// SetDeletedAt sets the "deletedAt" field.
+func (m *MusicTrackMutation) SetDeletedAt(t time.Time) {
+	m.deletedAt = &t
+}
+
+// DeletedAt returns the value of the "deletedAt" field in the mutation.
+func (m *MusicTrackMutation) DeletedAt() (r time.Time, exists bool) {
+	v := m.deletedAt
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDeletedAt returns the old "deletedAt" field's value of the MusicTrack entity.
+// If the MusicTrack object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MusicTrackMutation) OldDeletedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDeletedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDeletedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDeletedAt: %w", err)
+	}
+	return oldValue.DeletedAt, nil
+}
+
+// ClearDeletedAt clears the value of the "deletedAt" field.
+func (m *MusicTrackMutation) ClearDeletedAt() {
+	m.deletedAt = nil
+	m.clearedFields[musictrack.FieldDeletedAt] = struct{}{}
+}
+
+// DeletedAtCleared returns if the "deletedAt" field was cleared in this mutation.
+func (m *MusicTrackMutation) DeletedAtCleared() bool {
+	_, ok := m.clearedFields[musictrack.FieldDeletedAt]
+	return ok
+}
+
+// ResetDeletedAt resets all changes to the "deletedAt" field.
+func (m *MusicTrackMutation) ResetDeletedAt() {
+	m.deletedAt = nil
+	delete(m.clearedFields, musictrack.FieldDeletedAt)
+}
+
+// Where appends a list predicates to the MusicTrackMutation builder.
+func (m *MusicTrackMutation) Where(ps ...predicate.MusicTrack) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the MusicTrackMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *MusicTrackMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.MusicTrack, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *MusicTrackMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *MusicTrackMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (MusicTrack).
+func (m *MusicTrackMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *MusicTrackMutation) Fields() []string {
+	fields := make([]string, 0, 11)
+	if m.name != nil {
+		fields = append(fields, musictrack.FieldName)
+	}
+	if m.artist != nil {
+		fields = append(fields, musictrack.FieldArtist)
+	}
+	if m.audioUrl != nil {
+		fields = append(fields, musictrack.FieldAudioUrl)
+	}
+	if m.coverUrl != nil {
+		fields = append(fields, musictrack.FieldCoverUrl)
+	}
+	if m.lrc != nil {
+		fields = append(fields, musictrack.FieldLrc)
+	}
+	if m.durationSeconds != nil {
+		fields = append(fields, musictrack.FieldDurationSeconds)
+	}
+	if m.sort != nil {
+		fields = append(fields, musictrack.FieldSort)
+	}
+	if m.visible != nil {
+		fields = append(fields, musictrack.FieldVisible)
+	}
+	if m.createdAt != nil {
+		fields = append(fields, musictrack.FieldCreatedAt)
+	}
+	if m.updatedAt != nil {
+		fields = append(fields, musictrack.FieldUpdatedAt)
+	}
+	if m.deletedAt != nil {
+		fields = append(fields, musictrack.FieldDeletedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *MusicTrackMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case musictrack.FieldName:
+		return m.Name()
+	case musictrack.FieldArtist:
+		return m.Artist()
+	case musictrack.FieldAudioUrl:
+		return m.AudioUrl()
+	case musictrack.FieldCoverUrl:
+		return m.CoverUrl()
+	case musictrack.FieldLrc:
+		return m.Lrc()
+	case musictrack.FieldDurationSeconds:
+		return m.DurationSeconds()
+	case musictrack.FieldSort:
+		return m.Sort()
+	case musictrack.FieldVisible:
+		return m.Visible()
+	case musictrack.FieldCreatedAt:
+		return m.CreatedAt()
+	case musictrack.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case musictrack.FieldDeletedAt:
+		return m.DeletedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *MusicTrackMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case musictrack.FieldName:
+		return m.OldName(ctx)
+	case musictrack.FieldArtist:
+		return m.OldArtist(ctx)
+	case musictrack.FieldAudioUrl:
+		return m.OldAudioUrl(ctx)
+	case musictrack.FieldCoverUrl:
+		return m.OldCoverUrl(ctx)
+	case musictrack.FieldLrc:
+		return m.OldLrc(ctx)
+	case musictrack.FieldDurationSeconds:
+		return m.OldDurationSeconds(ctx)
+	case musictrack.FieldSort:
+		return m.OldSort(ctx)
+	case musictrack.FieldVisible:
+		return m.OldVisible(ctx)
+	case musictrack.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case musictrack.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case musictrack.FieldDeletedAt:
+		return m.OldDeletedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown MusicTrack field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MusicTrackMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case musictrack.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case musictrack.FieldArtist:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetArtist(v)
+		return nil
+	case musictrack.FieldAudioUrl:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAudioUrl(v)
+		return nil
+	case musictrack.FieldCoverUrl:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCoverUrl(v)
+		return nil
+	case musictrack.FieldLrc:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLrc(v)
+		return nil
+	case musictrack.FieldDurationSeconds:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDurationSeconds(v)
+		return nil
+	case musictrack.FieldSort:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSort(v)
+		return nil
+	case musictrack.FieldVisible:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVisible(v)
+		return nil
+	case musictrack.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case musictrack.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case musictrack.FieldDeletedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDeletedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown MusicTrack field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *MusicTrackMutation) AddedFields() []string {
+	var fields []string
+	if m.adddurationSeconds != nil {
+		fields = append(fields, musictrack.FieldDurationSeconds)
+	}
+	if m.addsort != nil {
+		fields = append(fields, musictrack.FieldSort)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *MusicTrackMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case musictrack.FieldDurationSeconds:
+		return m.AddedDurationSeconds()
+	case musictrack.FieldSort:
+		return m.AddedSort()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MusicTrackMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case musictrack.FieldDurationSeconds:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddDurationSeconds(v)
+		return nil
+	case musictrack.FieldSort:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSort(v)
+		return nil
+	}
+	return fmt.Errorf("unknown MusicTrack numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *MusicTrackMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(musictrack.FieldCoverUrl) {
+		fields = append(fields, musictrack.FieldCoverUrl)
+	}
+	if m.FieldCleared(musictrack.FieldLrc) {
+		fields = append(fields, musictrack.FieldLrc)
+	}
+	if m.FieldCleared(musictrack.FieldDeletedAt) {
+		fields = append(fields, musictrack.FieldDeletedAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *MusicTrackMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *MusicTrackMutation) ClearField(name string) error {
+	switch name {
+	case musictrack.FieldCoverUrl:
+		m.ClearCoverUrl()
+		return nil
+	case musictrack.FieldLrc:
+		m.ClearLrc()
+		return nil
+	case musictrack.FieldDeletedAt:
+		m.ClearDeletedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown MusicTrack nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *MusicTrackMutation) ResetField(name string) error {
+	switch name {
+	case musictrack.FieldName:
+		m.ResetName()
+		return nil
+	case musictrack.FieldArtist:
+		m.ResetArtist()
+		return nil
+	case musictrack.FieldAudioUrl:
+		m.ResetAudioUrl()
+		return nil
+	case musictrack.FieldCoverUrl:
+		m.ResetCoverUrl()
+		return nil
+	case musictrack.FieldLrc:
+		m.ResetLrc()
+		return nil
+	case musictrack.FieldDurationSeconds:
+		m.ResetDurationSeconds()
+		return nil
+	case musictrack.FieldSort:
+		m.ResetSort()
+		return nil
+	case musictrack.FieldVisible:
+		m.ResetVisible()
+		return nil
+	case musictrack.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case musictrack.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case musictrack.FieldDeletedAt:
+		m.ResetDeletedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown MusicTrack field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *MusicTrackMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *MusicTrackMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *MusicTrackMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *MusicTrackMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *MusicTrackMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *MusicTrackMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *MusicTrackMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown MusicTrack unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *MusicTrackMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown MusicTrack edge %s", name)
 }
 
 // OperationLogMutation represents an operation that mutates the OperationLog nodes in the graph.

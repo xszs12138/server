@@ -24,15 +24,22 @@ func Open(ctx context.Context, cfg config.Config) (*ent.Client, error) {
 	client := ent.NewClient(ent.Driver(entsql.OpenDB(dialect.MySQL, db)))
 
 	if cfg.AutoMigrate {
+		// 旧库列重命名（表不存在时忽略）
 		if err := renameLegacyColumns(ctx, db); err != nil {
 			client.Close()
 			return nil, err
 		}
+		// 须先建表；全新库不能在 Schema.Create 之前 ALTER dictItems
+		if err := client.Schema.Create(ctx); err != nil {
+			client.Close()
+			return nil, err
+		}
+		// 旧库升级：补 dictItems.code 列与唯一索引
 		if err := ensureDictItemsCodeColumn(ctx, db); err != nil {
 			client.Close()
 			return nil, err
 		}
-		if err := client.Schema.Create(ctx); err != nil {
+		if err := backfillDictItemCodes(ctx, client); err != nil {
 			client.Close()
 			return nil, err
 		}

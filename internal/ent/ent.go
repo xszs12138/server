@@ -9,6 +9,7 @@ import (
 	"blog-server/internal/ent/game"
 	"blog-server/internal/ent/gamemonthlystat"
 	"blog-server/internal/ent/gameplaytimesnapshot"
+	"blog-server/internal/ent/musictrack"
 	"blog-server/internal/ent/operationlog"
 	"blog-server/internal/ent/post"
 	"blog-server/internal/ent/posttag"
@@ -90,6 +91,7 @@ func checkColumn(t, c string) error {
 			game.Table:                 game.ValidColumn,
 			gamemonthlystat.Table:      gamemonthlystat.ValidColumn,
 			gameplaytimesnapshot.Table: gameplaytimesnapshot.ValidColumn,
+			musictrack.Table:           musictrack.ValidColumn,
 			operationlog.Table:         operationlog.ValidColumn,
 			post.Table:                 post.ValidColumn,
 			posttag.Table:              posttag.ValidColumn,

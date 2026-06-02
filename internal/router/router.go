@@ -24,6 +24,7 @@ func New(cfg config.Config, client *ent.Client) *gin.Engine {
 	commentDAO := dao.NewEntCommentDAO(client)
 	siteSettingDAO := dao.NewEntSiteSettingDAO(client)
 	gameDAO := dao.NewEntGameDAO(client)
+	musicTrackDAO := dao.NewEntMusicTrackDAO(client)
 
 	authService := service.NewAuthService(
 		userDAO,
@@ -42,6 +43,7 @@ func New(cfg config.Config, client *ent.Client) *gin.Engine {
 	liveHub := livehub.NewHub()
 	liveService := service.NewLiveService(siteSettingDAO, authService, liveHub)
 	imageBedClient := imagebed.NewClient(cfg.ImageBedAPIURL, cfg.ImageBedToken)
+	musicService := service.NewMusicService(musicTrackDAO, authService)
 	galleryService := service.NewGalleryService(
 		imageBedClient,
 		cfg.ImageBedAlbumID,
@@ -59,6 +61,7 @@ func New(cfg config.Config, client *ent.Client) *gin.Engine {
 	liveController := controller.NewLiveController(liveService)
 	liveWSController := controller.NewLiveWSController(liveService, liveHub)
 	galleryController := controller.NewGalleryController(galleryService)
+	musicController := controller.NewMusicController(musicService)
 
 	web := engine.Group("/api/web")
 	{
@@ -77,6 +80,7 @@ func New(cfg config.Config, client *ent.Client) *gin.Engine {
 		web.GET("/games/sidebar", gameController.WebSidebar)
 		web.GET("/live", liveController.WebGetLive)
 		web.GET("/live/ws", liveWSController.WebLiveWS)
+		web.GET("/music/playlist", musicController.WebPlaylist)
 	}
 
 	admin := engine.Group("/api/admin")
@@ -136,6 +140,12 @@ func New(cfg config.Config, client *ent.Client) *gin.Engine {
 
 		admin.GET("/site-settings", siteController.AdminGetSiteSettings)
 		admin.POST("/site-settings/update", siteController.AdminUpdateSiteSettings)
+
+		admin.GET("/music/tracks", musicController.AdminList)
+		admin.GET("/music/tracks/:id", musicController.AdminGetByID)
+		admin.POST("/music/tracks", musicController.Create)
+		admin.POST("/music/tracks/:id/update", musicController.Update)
+		admin.POST("/music/tracks/:id/delete", musicController.Delete)
 	}
 
 	return engine

@@ -219,6 +219,34 @@ var (
 			},
 		},
 	}
+	// MusicTracksColumns holds the columns for the "musicTracks" table.
+	MusicTracksColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUint64, Increment: true},
+		{Name: "name", Type: field.TypeString, Size: 160},
+		{Name: "artist", Type: field.TypeString, Size: 128, Default: ""},
+		{Name: "audioUrl", Type: field.TypeString, Size: 512},
+		{Name: "coverUrl", Type: field.TypeString, Nullable: true, Size: 512, Default: ""},
+		{Name: "lrc", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "durationSeconds", Type: field.TypeInt, Default: 0},
+		{Name: "sort", Type: field.TypeInt, Default: 100},
+		{Name: "visible", Type: field.TypeBool, Default: true},
+		{Name: "createdAt", Type: field.TypeTime},
+		{Name: "updatedAt", Type: field.TypeTime},
+		{Name: "deletedAt", Type: field.TypeTime, Nullable: true},
+	}
+	// MusicTracksTable holds the schema information for the "musicTracks" table.
+	MusicTracksTable = &schema.Table{
+		Name:       "musicTracks",
+		Columns:    MusicTracksColumns,
+		PrimaryKey: []*schema.Column{MusicTracksColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "idxMusicTracksVisibleSort",
+				Unique:  false,
+				Columns: []*schema.Column{MusicTracksColumns[8], MusicTracksColumns[7]},
+			},
+		},
+	}
 	// OperationLogsColumns holds the columns for the "operationLogs" table.
 	OperationLogsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUint64, Increment: true},
@@ -439,6 +467,7 @@ var (
 		GamesTable,
 		GameMonthlyStatsTable,
 		GamePlaytimeSnapshotsTable,
+		MusicTracksTable,
 		OperationLogsTable,
 		PostsTable,
 		PostTagsTable,
@@ -469,6 +498,9 @@ func init() {
 	}
 	GamePlaytimeSnapshotsTable.Annotation = &entsql.Annotation{
 		Table: "gamePlaytimeSnapshots",
+	}
+	MusicTracksTable.Annotation = &entsql.Annotation{
+		Table: "musicTracks",
 	}
 	OperationLogsTable.Annotation = &entsql.Annotation{
 		Table: "operationLogs",

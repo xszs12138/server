@@ -47,7 +47,7 @@ func addColumnIfNotExists(
 	)
 	if _, err := db.ExecContext(ctx, query); err != nil {
 		var mysqlErr *mysql.MySQLError
-		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1060 {
+		if errors.As(err, &mysqlErr) && (mysqlErr.Number == 1060 || mysqlErr.Number == 1146) {
 			return nil
 		}
 		return fmt.Errorf("add column %s.%s: %w", table, column, err)
@@ -70,7 +70,7 @@ func addUniqueIndexIfNotExists(
 	)
 	if _, err := db.ExecContext(ctx, query); err != nil {
 		var mysqlErr *mysql.MySQLError
-		if errors.As(err, &mysqlErr) && (mysqlErr.Number == 1061 || mysqlErr.Number == 1062) {
+		if errors.As(err, &mysqlErr) && (mysqlErr.Number == 1061 || mysqlErr.Number == 1062 || mysqlErr.Number == 1146) {
 			return nil
 		}
 		return fmt.Errorf("create index %s on %s: %w", indexName, table, err)
