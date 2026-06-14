@@ -2,6 +2,7 @@ package controller
 
 import (
 	"errors"
+	"log"
 	"net/http"
 
 	"blog-server/internal/dto"
@@ -112,6 +113,7 @@ func (ctl *GameController) AdminUpdate(c *gin.Context) {
 func (ctl *GameController) AdminSync(c *gin.Context) {
 	res, err := ctl.games.AdminSync(c.Request.Context(), c.GetHeader("Authorization"))
 	if err != nil {
+		log.Printf("[games] AdminSync failed: %v", err)
 		writeGameError(c, err)
 		return
 	}
@@ -143,5 +145,6 @@ func writeGameError(c *gin.Context, err error) {
 		c.JSON(http.StatusBadRequest, dto.Error(40000, "请求参数错误"))
 		return
 	}
+	log.Printf("[games] admin internal error: %v", err)
 	c.JSON(http.StatusInternalServerError, dto.Error(50000, err.Error()))
 }

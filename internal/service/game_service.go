@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"math"
 	"strings"
 	"time"
@@ -328,19 +329,27 @@ func (svc *GameService) AdminSync(
 		return nil, err
 	}
 	if !svc.steam.Configured() {
+		log.Printf("[steam] sync aborted: apiKey or steamId not configured")
 		return nil, ErrSteamNotConfigured
 	}
 
+	log.Printf("[steam] sync start")
 	owned, err := svc.steam.GetOwnedGames(ctx)
 	if err != nil {
+		log.Printf("[steam] sync GetOwnedGames failed: %v", err)
 		return nil, err
 	}
+	log.Printf("[steam] sync owned games count=%d", len(owned))
+
 	recentMap := map[uint32]time.Time{}
 	if recent, recentErr := svc.steam.GetRecentlyPlayedGames(ctx, 10); recentErr == nil {
-	now := time.Now()
+		now := time.Now()
 		for index, item := range recent {
 			recentMap[item.AppID] = now.Add(-time.Duration(index) * time.Minute)
 		}
+		log.Printf("[steam] sync recently played count=%d", len(recent))
+	} else {
+		log.Printf("[steam] sync GetRecentlyPlayedGames skipped: %v", recentErr)
 	}
 
 	syncedAt := time.Now()
@@ -396,6 +405,8 @@ func (svc *GameService) AdminSync(
 				if len(details.Genres) > 0 {
 					genres = details.Genres
 				}
+			} else {
+				log.Printf("[steam] sync GetAppDetails appid=%d failed: %v", ownedGame.AppID, detailsErr)
 			}
 		}
 
@@ -417,6 +428,7 @@ func (svc *GameService) AdminSync(
 		}
 
 		if _, err := svc.games.UpsertFromSteam(ctx, item); err != nil {
+			log.Printf("[steam] sync upsert failed appid=%d name=%q err=%v", ownedGame.AppID, displayName, err)
 			return nil, fmt.Errorf("保存游戏 %s (appid=%d) 失败: %w", displayName, ownedGame.AppID, err)
 		}
 		syncedCount++
@@ -425,20 +437,24 @@ func (svc *GameService) AdminSync(
 			if ownedGame.PlaytimeForever > previous {
 				delta := ownedGame.PlaytimeForever - previous
 				if addErr := svc.games.AddMonthlyMinutes(ctx, yearMonth, delta); addErr != nil {
+					log.Printf("[steam] sync monthly stats failed appid=%d err=%v", ownedGame.AppID, addErr)
 					return nil, fmt.Errorf("更新月度统计失败 (appid=%d): %w", ownedGame.AppID, addErr)
 				}
 			}
 		}
 		if snapErr := svc.games.CreateSnapshot(ctx, ownedGame.AppID, ownedGame.PlaytimeForever, syncedAt); snapErr != nil {
+			log.Printf("[steam] sync snapshot failed appid=%d err=%v", ownedGame.AppID, snapErr)
 			return nil, fmt.Errorf("写入时长快照失败 (appid=%d): %w", ownedGame.AppID, snapErr)
 		}
 	}
 
 	visibleCount, err := svc.games.CountVisible(ctx)
 	if err != nil {
+		log.Printf("[steam] sync CountVisible failed: %v", err)
 		return nil, err
 	}
 
+	log.Printf("[steam] sync done synced=%d visible=%d", syncedCount, visibleCount)
 	return &dto.GameSyncResult{
 		SyncedCount:  syncedCount,
 		VisibleCount: visibleCount,

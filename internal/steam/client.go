@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -40,12 +42,22 @@ func NewClient(apiKey, steamID, lang string) *Client {
 	if lang == "" {
 		lang = "schinese"
 	}
+	if proxy := strings.TrimSpace(os.Getenv("HTTPS_PROXY")); proxy != "" {
+		log.Printf("[steam] client init: HTTPS_PROXY=%s steamId=%s apiKeyConfigured=%t", proxy, maskSteamID(steamID), apiKey != "")
+	} else if proxy := strings.TrimSpace(os.Getenv("HTTP_PROXY")); proxy != "" {
+		log.Printf("[steam] client init: HTTP_PROXY=%s steamId=%s apiKeyConfigured=%t", proxy, maskSteamID(steamID), apiKey != "")
+	} else {
+		log.Printf("[steam] client init: no HTTP(S)_PROXY steamId=%s apiKeyConfigured=%t", maskSteamID(steamID), apiKey != "")
+	}
 	return &Client{
 		apiKey:  apiKey,
 		steamID: steamID,
 		lang:    lang,
 		httpClient: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: 60 * time.Second,
+			Transport: &http.Transport{
+				Proxy: http.ProxyFromEnvironment,
+			},
 		},
 	}
 }
@@ -246,26 +258,49 @@ func (c *Client) getJSON(ctx context.Context, endpoint string, values url.Values
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {
+		log.Printf("[steam] build request failed endpoint=%s err=%v", endpoint, err)
 		return err
 	}
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {
-		return err
+		log.Printf("[steam] request failed endpoint=%s err=%v (timeout/proxy/network?)", endpoint, err)
+		return fmt.Errorf("steam request %s: %w", endpoint, err)
 	}
 	defer res.Body.Close()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
+		log.Printf("[steam] read body failed endpoint=%s status=%d err=%v", endpoint, res.StatusCode, err)
 		return err
 	}
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
-		return fmt.Errorf("steam api status %d: %s", res.StatusCode, string(body))
+		snippet := truncateForLog(string(body), 256)
+		log.Printf("[steam] bad status endpoint=%s status=%d body=%q", endpoint, res.StatusCode, snippet)
+		return fmt.Errorf("steam api status %d: %s", res.StatusCode, snippet)
 	}
 	if err := json.Unmarshal(body, dest); err != nil {
-		return err
+		snippet := truncateForLog(string(body), 256)
+		log.Printf("[steam] json decode failed endpoint=%s err=%v body=%q", endpoint, err, snippet)
+		return fmt.Errorf("steam json decode %s: %w", endpoint, err)
 	}
 	return nil
+}
+
+func maskSteamID(steamID string) string {
+	steamID = strings.TrimSpace(steamID)
+	if len(steamID) <= 4 {
+		return "****"
+	}
+	return steamID[:4] + "****" + steamID[len(steamID)-2:]
+}
+
+func truncateForLog(s string, max int) string {
+	s = strings.TrimSpace(s)
+	if len(s) <= max {
+		return s
+	}
+	return s[:max] + "..."
 }
 
 func BuildCoverURL(appID uint32, headerImage string) string {
