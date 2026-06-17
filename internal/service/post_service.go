@@ -326,10 +326,12 @@ func normalizePostStatus(status string) string {
 }
 
 func defaultContentType(contentType string) string {
-	if contentType == "" {
+	switch contentType {
+	case "html", "markdown":
+		return contentType
+	default:
 		return "markdown"
 	}
-	return contentType
 }
 
 func toWebPostListItem(post *model.Post) dto.WebPostListItem {
